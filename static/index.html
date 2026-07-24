@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>信贷预审智能体 · 风控指挥中心</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+  :root{
+    --bg:#0a1410;
+    --bg-2:#0d1a14;
+    --panel:#101e18;
+    --panel-2:#142821;
+    --border:#1f3a2e;
+    --border-soft:#16302a;
+    --gold:#c89968;
+    --gold-bright:#e0b582;
+    --gold-dim:#8a6a45;
+    --crimson:#e07a5f;
+    --crimson-deep:#c45a3f;
+    --emerald:#6dbf85;
+    --amber:#e3b341;
+    --ink:#e8e3d8;
+    --ink-dim:#a8b5ac;
+    --ink-mute:#6b7d72;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(ellipse 1200px 600px at 80% -10%, rgba(200,153,104,.08), transparent 60%),
+      radial-gradient(ellipse 900px 500px at 10% 110%, rgba(109,191,133,.05), transparent 60%),
+      linear-gradient(180deg, #0a1410 0%, #0c1813 100%);
+    min-height:100vh;
+  }
+  /* 网格纹理 */
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(200,153,104,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,153,104,.025) 1px, transparent 1px);
+    background-size:48px 48px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 40%, black 30%, transparent 90%);
+  }
+  .font-display{font-family:'Fraunces',serif;font-optical-sizing:auto}
+  .font-mono{font-family:'JetBrains Mono',monospace}
+  .gold-text{color:var(--gold-bright)}
+  .gold-grad{background:linear-gradient(135deg,var(--gold-bright),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .panel{
+    background:linear-gradient(180deg, rgba(20,40,33,.6), rgba(16,30,24,.6));
+    border:1px solid var(--border);
+    backdrop-filter:blur(8px);
+    position:relative;
+  }
+  .panel-glow::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(135deg, rgba(200,153,104,.06), transparent 40%);
+  }
+  .panel-corner{position:relative}
+  .panel-corner::before,.panel-corner::after{
+    content:'';position:absolute;width:14px;height:14px;border:1px solid var(--gold);opacity:.6;
+  }
+  .panel-corner::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+  .panel-corner::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+  .divider-gold{height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim) 20%,var(--gold) 50%,var(--gold-dim) 80%,transparent);opacity:.5}
+  .tab-btn{
+    position:relative;padding:14px 22px;color:var(--ink-dim);font-weight:500;letter-spacing:.02em;
+    cursor:pointer;transition:color .2s;font-size:14px;
+  }
+  .tab-btn:hover{color:var(--ink)}
+  .tab-btn.active{color:var(--gold-bright)}
+  .tab-btn.active::after{
+    content:'';position:absolute;bottom:-1px;left:20%;right:20%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    box-shadow:0 0 8px rgba(200,153,104,.5);
+  }
+  .stat-num{font-family:'Fraunces',serif;font-weight:600;font-variant-numeric:tabular-nums}
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:2px;
+    font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  }
+  .badge-reject{background:rgba(224,122,95,.12);color:var(--crimson);border:1px solid rgba(224,122,95,.3)}
+  .badge-pass{background:rgba(109,191,133,.12);color:var(--emerald);border:1px solid rgba(109,191,133,.3)}
+  .badge-warn{background:rgba(227,179,65,.12);color:var(--amber);border:1px solid rgba(227,179,65,.3)}
+  .badge-high{background:rgba(224,122,95,.15);color:var(--crimson);border:1px solid rgba(224,122,95,.4)}
+  .badge-medium{background:rgba(227,179,65,.15);color:var(--amber);border:1px solid rgba(227,179,65,.4)}
+  .badge-low{background:rgba(109,191,133,.15);color:var(--emerald);border:1px solid rgba(109,191,133,.4)}
+  .badge-gold{background:rgba(200,153,104,.12);color:var(--gold-bright);border:1px solid rgba(200,153,104,.35)}
+  .row-hover:hover{background:rgba(200,153,104,.04)}
+  .btn-gold{
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    color:#1a1208;font-weight:600;padding:10px 20px;border:none;cursor:pointer;
+    transition:all .2s;letter-spacing:.02em;font-size:13px;
+  }
+  .btn-gold:hover{background:linear-gradient(135deg,var(--gold-bright),var(--gold));box-shadow:0 0 20px rgba(200,153,104,.3)}
+  .btn-ghost{
+    background:transparent;color:var(--ink-dim);border:1px solid var(--border);
+    padding:9px 18px;cursor:pointer;transition:all .2s;font-size:13px;
+  }
+  .btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold-bright)}
+  input,textarea,select{
+    background:rgba(10,20,16,.6);border:1px solid var(--border);color:var(--ink);
+    padding:10px 14px;font-family:'Manrope';font-size:14px;outline:none;transition:border .2s;
+  }
+  input:focus,textarea:focus{border-color:var(--gold-dim)}
+  .fade-in{animation:fadeIn .5s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .scroll-thin::-webkit-scrollbar{width:6px;height:6px}
+  .scroll-thin::-webkit-scrollbar-track{background:transparent}
+  .scroll-thin::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .scroll-thin::-webkit-scrollbar-thumb:hover{background:var(--gold-dim)}
+  .timeline-line{position:absolute;left:11px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,var(--gold-dim),transparent)}
+  .rrf-bar{height:4px;background:rgba(200,153,104,.15);border-radius:2px;overflow:hidden}
+  .rrf-bar>div{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright))}
+  .score-ring{transform:rotate(-90deg)}
+  .score-ring circle{fill:none;stroke-width:3}
+  .score-ring .bg{stroke:rgba(200,153,104,.1)}
+  .score-ring .fg{stroke:var(--gold);transition:stroke-dashoffset 1s ease}
+  .glow-text{text-shadow:0 0 12px rgba(200,153,104,.4)}
+  .tab-content{display:none}
+  .tab-content.active{display:block;animation:fadeIn .4s ease}
+  .skeleton{background:linear-gradient(90deg,rgba(200,153,104,.05),rgba(200,153,104,.1),rgba(200,153,104,.05));background-size:200% 100%;animation:shimmer 1.5s infinite}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+</style>
+</head>
+<body>
+
+<!-- ============ 顶部导航 ============ -->
+<header class="relative z-10 border-b border-[var(--border)]" style="background:rgba(10,20,16,.7);backdrop-filter:blur(12px)">
+  <div class="max-w-[1600px] mx-auto px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <path d="M18 2L34 10V26L18 34L2 26V10L18 2Z" stroke="url(#g1)" stroke-width="1.2" fill="rgba(200,153,104,.05)"/>
+          <path d="M18 8L28 13V23L18 28L8 23V13L18 8Z" stroke="var(--gold)" stroke-width="0.8" fill="none"/>
+          <circle cx="18" cy="18" r="3" fill="var(--gold)"/>
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#e0b582"/><stop offset="1" stop-color="#8a6a45"/></linearGradient></defs>
+        </svg>
+        <div>
+          <div class="font-display text-[18px] font-semibold gold-grad leading-none">Aurum Sentinel</div>
+          <div class="text-[10px] tracking-[.25em] text-[var(--ink-mute)] uppercase mt-1">Credit Pre-Audit Agent</div>
+        </div>
+      </div>
+      <div class="h-8 w-px bg-[var(--border)] mx-2"></div>
+      <div class="flex items-center gap-2 text-[12px] text-[var(--ink-mute)]">
+        <span class="pulse-dot"></span>
+        <span>实时风控引擎 · 在线</span>
+      </div>
+    </div>
+    <nav class="flex items-center gap-1">
+      <button class="tab-btn active" data-tab="dashboard">指挥概览</button>
+      <button class="tab-btn" data-tab="applicants">申请人档案</button>
+      <button class="tab-btn" data-tab="kg">反欺诈图谱</button>
+      <button class="tab-btn" data-tab="rag">RAG 检索</button>
+    </nav>
+    <div class="flex items-center gap-3 text-[12px] text-[var(--ink-mute)]">
+      <span class="font-mono" id="clock">--:--:--</span>
+      <span class="h-4 w-px bg-[var(--border)]"></span>
+      <span>v1.0 · 21 申请人</span>
+    </div>
+  </div>
+  <div class="divider-gold"></div>
+</header>
+
+<main class="relative z-10 max-w-[1600px] mx-auto px-8 py-8">
+
+<!-- ============ Tab 1: 指挥概览 ============ -->
+<section id="tab-dashboard" class="tab-content active">
+  <!-- 标题区 -->
+  <div class="mb-8 flex items-end justify-between">
+    <div>
+      <div class="text-[11px] tracking-[.3em] text-[var(--gold-dim)] uppercase mb-2">Command Overview</div>
+      <h1 class="font-display text-[42px] font-semibold leading-tight">
+        风控<span class="gold-grad italic">指挥</span>概览
+      </h1>
+      <p class="text-[var(--ink-dim)] text-sm mt-2">13 步流水线 · Hybrid RAG · 知识图谱反欺诈 · Ragas 评估</p>
+    </div>
+    <div class="text-right text-[var(--ink-mute)] text-[11px]">
+      <div>报告生成时间</div>
+      <div class="font-mono text-[var(--ink-dim)] mt-1" id="report-time">--</div>
+    </div>
+  </div>
+
+  <!-- KPI 卡片 -->
+  <div class="grid grid-cols-4 gap-5 mb-8" id="kpi-grid">
+    <div class="panel panel-corner p-6 panel-glow">
+      <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase mb-3">申请人总数</div>
+      <div class="flex items-end gap-3">
+        <div class="stat-num text-[48px] gold-grad leading-none" id="kpi-applicants">--</div>
+        <div class="text-[var(--ink-mute)] text-xs mb-2">人</div>
+      </div>
+      <div class="text-[var(--ink-mute)] text-[11px] mt-3">批量预审 · 单次决策</div>
+    </div>
+    <div class="panel panel-corner p-6 panel-glow">
+      <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase mb-3">总耗时</div>
+      <div class="flex items-end gap-3">
+        <div class="stat-num text-[48px] gold-grad leading-none" id="kpi-elapsed">--</div>
+        <div class="text-[var(--ink-mute)] text-xs mb-2">秒</div>
+      </div>
+      <div class="text-[var(--ink-mute)] text-[11px] mt-3" id="kpi-avg">平均 -- 秒/人</div>
+    </div>
+    <div class="panel panel-corner p-6 panel-glow">
+      <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase mb-3">拒贷率</div>
+      <div class="flex items-end gap-3">
+        <div class="stat-num text-[48px] leading-none" style="color:var(--crimson)" id="kpi-reject">--</div>
+        <div class="text-[var(--ink-mute)] text-xs mb-2">%</div>
+      </div>
+      <div class="text-[var(--ink-mute)] text-[11px] mt-3" id="kpi-reject-detail">--</div>
+    </div>
+    <div class="panel panel-corner p-6 panel-glow">
+      <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase mb-3">RAG 评估</div>
+      <div class="flex items-end gap-3">
+        <div class="stat-num text-[48px] gold-grad leading-none" id="kpi-eval">--</div>
+        <div class="text-[var(--ink-mute)] text-xs mb-2">overall</div>
+      </div>
+      <div class="text-[var(--ink-mute)] text-[11px] mt-3" id="kpi-eval-detail">--</div>
+    </div>
+  </div>
+
+  <!-- 图表区 -->
+  <div class="grid grid-cols-12 gap-5 mb-8">
+    <!-- 决策分布 -->
+    <div class="panel panel-corner col-span-4 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-semibold">决策分布</h3>
+        <span class="badge badge-gold">Decision</span>
+      </div>
+      <div class="relative h-[220px]"><canvas id="chart-decision"></canvas></div>
+    </div>
+    <!-- 风险等级 -->
+    <div class="panel panel-corner col-span-4 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-semibold">风险等级</h3>
+        <span class="badge badge-gold">Risk</span>
+      </div>
+      <div class="relative h-[220px]"><canvas id="chart-risk"></canvas></div>
+    </div>
+    <!-- 风险类型 -->
+    <div class="panel panel-corner col-span-4 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-semibold">风险类型分布</h3>
+        <span class="badge badge-gold">Type</span>
+      </div>
+      <div class="relative h-[220px]"><canvas id="chart-risk-type"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-5 mb-8">
+    <!-- 置信度分解 -->
+    <div class="panel panel-corner col-span-7 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-semibold">置信度分解</h3>
+        <span class="badge badge-gold">Confidence</span>
+      </div>
+      <div class="relative h-[240px]"><canvas id="chart-confidence"></canvas></div>
+    </div>
+    <!-- 缺失项 TOP -->
+    <div class="panel panel-corner col-span-5 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-lg font-semibold">缺失项 TOP</h3>
+        <span class="badge badge-gold">Missing</span>
+      </div>
+      <div id="missing-list" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <!-- 流水线 -->
+  <div class="panel panel-corner p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display text-lg font-semibold">13 步预审流水线</h3>
+      <span class="badge badge-gold">Pipeline</span>
+    </div>
+    <div class="grid grid-cols-13 gap-2" id="pipeline-grid" style="grid-template-columns:repeat(13,1fr)"></div>
+  </div>
+</section>
+
+<!-- ============ Tab 2: 申请人档案 ============ -->
+<section id="tab-applicants" class="tab-content">
+  <div class="mb-8">
+    <div class="text-[11px] tracking-[.3em] text-[var(--gold-dim)] uppercase mb-2">Applicant Dossier</div>
+    <h1 class="font-display text-[42px] font-semibold leading-tight">申请人<span class="gold-grad italic">档案</span></h1>
+    <p class="text-[var(--ink-dim)] text-sm mt-2">点击申请人查看完整预审报告 · 风险点 · 字段差异 · RAG 引用</p>
+  </div>
+
+  <!-- 列表视图 -->
+  <div id="applicant-list-view" class="panel panel-corner overflow-hidden">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-[11px] tracking-[.15em] uppercase text-[var(--gold-dim)]" style="background:rgba(200,153,104,.04)">
+          <th class="text-left py-4 px-6 font-medium">申请人</th>
+          <th class="text-center py-4 px-3 font-medium">材料数</th>
+          <th class="text-center py-4 px-3 font-medium">缺失项</th>
+          <th class="text-center py-4 px-3 font-medium">风险点</th>
+          <th class="text-center py-4 px-3 font-medium">置信度</th>
+          <th class="text-center py-4 px-3 font-medium">风险等级</th>
+          <th class="text-center py-4 px-3 font-medium">决策</th>
+          <th class="text-right py-4 px-6 font-medium">耗时</th>
+        </tr>
+      </thead>
+      <tbody id="applicant-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- 详情视图 -->
+  <div id="applicant-detail-view" style="display:none"></div>
+</section>
+
+<!-- ============ Tab 3: 反欺诈图谱 ============ -->
+<section id="tab-kg" class="tab-content">
+  <div class="mb-8 flex items-end justify-between">
+    <div>
+      <div class="text-[11px] tracking-[.3em] text-[var(--gold-dim)] uppercase mb-2">Anti-Fraud Graph</div>
+      <h1 class="font-display text-[42px] font-semibold leading-tight">反欺诈<span class="gold-grad italic">知识图谱</span></h1>
+      <p class="text-[var(--ink-dim)] text-sm mt-2">21 申请人 · 8 类节点 · 8 种关系 · 8 条反欺诈规则</p>
+    </div>
+    <div class="flex gap-3">
+      <button class="btn-ghost" id="kg-toggle-edges">切换边显示</button>
+      <button class="btn-ghost" id="kg-fit">重置视图</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-5">
+    <!-- 图谱 -->
+    <div class="panel panel-corner col-span-9 p-4" style="height:640px">
+      <div id="kg-network" style="height:100%;width:100%"></div>
+    </div>
+    <!-- 侧栏 -->
+    <div class="col-span-3 space-y-5">
+      <div class="panel panel-corner p-5">
+        <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase mb-3">图谱统计</div>
+        <div id="kg-stats" class="space-y-2 text-sm"></div>
+      </div>
+      <div class="panel panel-corner p-5">
+        <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase mb-3">节点图例</div>
+        <div id="kg-legend" class="space-y-2 text-xs"></div>
+      </div>
+      <div class="panel panel-corner p-5" style="border-color:rgba(224,122,95,.3)">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-[11px] tracking-[.2em] uppercase" style="color:var(--crimson)">反欺诈告警</div>
+          <span class="badge badge-high" id="kg-alert-count">0</span>
+        </div>
+        <div id="kg-alerts" class="space-y-3 text-xs max-h-[280px] overflow-y-auto scroll-thin"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Tab 4: RAG 检索 ============ -->
+<section id="tab-rag" class="tab-content">
+  <div class="mb-8">
+    <div class="text-[11px] tracking-[.3em] text-[var(--gold-dim)] uppercase mb-2">Hybrid Retrieval</div>
+    <h1 class="font-display text-[42px] font-semibold leading-tight">Hybrid <span class="gold-grad italic">RAG</span> 检索</h1>
+    <p class="text-[var(--ink-dim)] text-sm mt-2">Dense BGE-M3 + Sparse BM25 · RRF 融合 · 三层知识库（法规/制度/案例）</p>
+  </div>
+
+  <!-- 检索框 -->
+  <div class="panel panel-corner p-6 mb-6">
+    <div class="flex gap-3">
+      <input id="rag-input" type="text" placeholder="输入查询：如 身份证号跨材料不一致，收入证明与完税证明差异大" class="flex-1">
+      <button class="btn-gold" id="rag-search-btn">检索</button>
+    </div>
+    <div class="flex gap-2 mt-3 flex-wrap">
+      <span class="text-[var(--ink-mute)] text-xs py-1">快捷查询：</span>
+      <button class="btn-ghost text-xs py-1 px-3 rag-example" data-q="身份证号跨材料不一致">身份证号跨材料不一致</button>
+      <button class="btn-ghost text-xs py-1 px-3 rag-example" data-q="收入证明与流水月均入账差异超过20%">收入证明与流水差异</button>
+      <button class="btn-ghost text-xs py-1 px-3 rag-example" data-q="银行流水币种异常 稳定币">流水币种异常</button>
+      <button class="btn-ghost text-xs py-1 px-3 rag-example" data-q="食品经营许可证过期 经营实体存续">经营资质过期</button>
+      <button class="btn-ghost text-xs py-1 px-3 rag-example" data-q="征信报告缺失 15天有效期">征信报告缺失</button>
+    </div>
+  </div>
+
+  <!-- 加载中 -->
+  <div id="rag-loading" class="panel panel-corner p-12 text-center" style="display:none">
+    <div class="text-[var(--gold-dim)] text-sm">检索中 · 首次加载 BGE-M3 模型约需 15 秒...</div>
+    <div class="mt-4 inline-block w-8 h-8 border-2 border-[var(--gold-dim)] border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- 结果 -->
+  <div id="rag-results" style="display:none">
+    <div class="grid grid-cols-3 gap-5">
+      <div class="panel panel-corner p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-display text-base font-semibold gold-text">监管法规</h3>
+          <span class="badge badge-gold" id="rag-c-reg">0</span>
+        </div>
+        <div class="text-[10px] text-[var(--ink-mute)] mb-4 tracking-wider">REGULATION · 最高权重</div>
+        <div id="rag-reg-list" class="space-y-3"></div>
+      </div>
+      <div class="panel panel-corner p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-display text-base font-semibold gold-text">内部制度</h3>
+          <span class="badge badge-gold" id="rag-c-pol">0</span>
+        </div>
+        <div class="text-[10px] text-[var(--ink-mute)] mb-4 tracking-wider">POLICY · 核心依据</div>
+        <div id="rag-pol-list" class="space-y-3"></div>
+      </div>
+      <div class="panel panel-corner p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-display text-base font-semibold gold-text">案例汇编</h3>
+          <span class="badge badge-gold" id="rag-c-case">0</span>
+        </div>
+        <div class="text-[10px] text-[var(--ink-mute)] mb-4 tracking-wider">CASE · 参考层</div>
+        <div id="rag-case-list" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="relative z-10 mt-12 py-6 border-t border-[var(--border)] text-center text-[11px] text-[var(--ink-mute)]">
+  <span class="font-display gold-text">Aurum Sentinel</span> · 信贷材料预审智能体 · PaddleOCR + 千问 + BGE-M3 + Chroma + networkx · 演示用途
+</footer>
+
+<script>
+// ============================================================
+// 全局
+// ============================================================
+const API = '';
+let charts = {};
+
+// 时钟
+function tick(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('clock').textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+setInterval(tick, 1000); tick();
+
+// Tab 切换
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    // 懒加载
+    if (btn.dataset.tab === 'kg' && !window._kgLoaded) loadKG();
+  });
+});
+
+// 通用请求
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+// ============================================================
+// Tab 1: 指挥概览
+// ============================================================
+const PIPELINE = [
+  {n:'Step1', t:'图像质量门', desc:'tilt/blur OCR失败拦截'},
+  {n:'Step2', t:'OCR+分类+抽取', desc:'PaddleOCR-VL + 千问'},
+  {n:'Step3', t:'字段格式校验', desc:'身份证/日期/金额正则'},
+  {n:'Step4', t:'跨文档比对', desc:'姓名/证件号/收入一致性'},
+  {n:'Step5', t:'缺失项检测', desc:'必填/选填/重复/异常'},
+  {n:'Step6', t:'规则引擎', desc:'硬错误/软告警'},
+  {n:'Step7', t:'推理风险', desc:'千问语义风险点'},
+  {n:'Step8', t:'外部核验', desc:'黑名单/三要素'},
+  {n:'Step10', t:'RAG检索', desc:'Hybrid RRF 三层'},
+  {n:'Step11', t:'KG反欺诈', desc:'8规则团伙检测'},
+  {n:'Step12', t:'GraphRAG', desc:'Product→Doc→Rule→Decision'},
+  {n:'Step9', t:'决策报告', desc:'综合RAG/KG/GraphRAG'},
+  {n:'Step13', t:'Ragas评估', desc:'faithfulness+relevancy'},
+];
+
+function renderPipeline(){
+  const grid = document.getElementById('pipeline-grid');
+  grid.innerHTML = PIPELINE.map((s, i) => `
+    <div class="relative p-3 border border-[var(--border)] hover:border-[var(--gold-dim)] transition group" style="background:rgba(200,153,104,.02)">
+      <div class="text-[10px] font-mono text-[var(--gold-dim)]">${s.n}</div>
+      <div class="text-xs font-semibold mt-1 leading-tight">${s.t}</div>
+      <div class="text-[10px] text-[var(--ink-mute)] mt-2 leading-snug">${s.desc}</div>
+      ${i < PIPELINE.length-1 ? '<div class="absolute top-1/2 -right-[5px] w-2 h-2 rotate-45 border-t border-r border-[var(--gold-dim)]" style="background:var(--bg)"></div>' : ''}
+    </div>
+  `).join('');
+}
+
+Chart.defaults.color = '#a8b5ac';
+Chart.defaults.font.family = "'Manrope', sans-serif";
+Chart.defaults.borderColor = 'rgba(31,58,46,.5)';
+
+async function loadDashboard(){
+  const data = await fetchJSON('/api/overview');
+  // KPI
+  document.getElementById('kpi-applicants').textContent = data.applicant_count;
+  document.getElementById('kpi-elapsed').textContent = data.total_elapsed_seconds;
+  document.getElementById('kpi-avg').textContent = `平均 ${(data.total_elapsed_seconds/data.applicant_count).toFixed(1)} 秒/人`;
+  const rejectN = data.decision_distribution['拒绝'] || 0;
+  const rejectRate = data.applicant_count ? ((rejectN/data.applicant_count)*100).toFixed(0) : 0;
+  document.getElementById('kpi-reject').textContent = rejectRate;
+  document.getElementById('kpi-reject-detail').textContent = `${rejectN}/${data.applicant_count} 人拒贷`;
+  if (data.eval_summary){
+    document.getElementById('kpi-eval').textContent = data.eval_summary.avg_overall.toFixed(2);
+    document.getElementById('kpi-eval-detail').textContent = `faith ${data.eval_summary.avg_faithfulness.toFixed(2)} · rel ${data.eval_summary.avg_answer_relevancy.toFixed(2)}`;
+  } else {
+    document.getElementById('kpi-eval').textContent = 'N/A';
+  }
+  document.getElementById('report-time').textContent = data.generated_at ? data.generated_at.replace('T',' ').slice(0,19) : '--';
+
+  // 决策分布
+  const decLabels = Object.keys(data.decision_distribution);
+  const decData = Object.values(data.decision_distribution);
+  charts.decision = new Chart(document.getElementById('chart-decision'), {
+    type:'doughnut',
+    data:{labels:decLabels, datasets:[{data:decData, backgroundColor:['#e07a5f','#6dbf85','#e3b341'], borderColor:'#0a1410', borderWidth:2}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, padding:14, font:{size:11}}}}}
+  });
+
+  // 风险等级
+  const riskLabels = Object.keys(data.risk_distribution);
+  const riskData = Object.values(data.risk_distribution);
+  const riskColors = riskLabels.map(l => l==='high'?'#e07a5f':l==='medium'?'#e3b341':'#6dbf85');
+  charts.risk = new Chart(document.getElementById('chart-risk'), {
+    type:'doughnut',
+    data:{labels:riskLabels.map(l=>l==='high'?'高风险':l==='medium'?'中风险':'低风险'), datasets:[{data:riskData, backgroundColor:riskColors, borderColor:'#0a1410', borderWidth:2}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'68%',
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, padding:14, font:{size:11}}}}}
+  });
+
+  // 风险类型
+  const rtLabels = Object.keys(data.risk_type_distribution);
+  const rtData = Object.values(data.risk_type_distribution);
+  charts.rt = new Chart(document.getElementById('chart-risk-type'), {
+    type:'bar',
+    data:{labels:rtLabels, datasets:[{data:rtData, backgroundColor:'rgba(200,153,104,.6)', borderColor:'#c89968', borderWidth:1}]},
+    options:{responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:'rgba(31,58,46,.4)'}, ticks:{font:{size:10}}}, y:{grid:{display:false}, ticks:{font:{size:10}}}}}
+  });
+
+  // 置信度
+  const cl = data.confidence_list;
+  charts.conf = new Chart(document.getElementById('chart-confidence'), {
+    type:'bar',
+    data:{
+      labels:cl.map(c=>c.person),
+      datasets:[
+        {label:'总置信度', data:cl.map(c=>c.total), backgroundColor:'#c89968'},
+        {label:'OCR', data:cl.map(c=>c.ocr), backgroundColor:'#6dbf85'},
+        {label:'规则', data:cl.map(c=>c.rule), backgroundColor:'#e3b341'},
+        {label:'推理', data:cl.map(c=>c.inference), backgroundColor:'#e07a5f'},
+        {label:'完整度', data:cl.map(c=>c.completeness), backgroundColor:'#8a6a45'},
+      ]
+    },
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:10, padding:10, font:{size:10}}}},
+      scales:{x:{grid:{display:false}, ticks:{font:{size:10}}}, y:{min:0, max:1, grid:{color:'rgba(31,58,46,.4)'}, ticks:{font:{size:10}}}}}
+  });
+
+  // 缺失项 TOP
+  const missList = document.getElementById('missing-list');
+  missList.innerHTML = data.missing_top.map(([name, n]) => {
+    const pct = (n / data.applicant_count) * 100;
+    return `
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-[var(--ink-dim)]">${name}</span>
+          <span class="font-mono text-[var(--crimson)]">${n}/${data.applicant_count}</span>
+        </div>
+        <div class="h-1.5 bg-[rgba(224,122,95,.1)] rounded">
+          <div class="h-full rounded" style="width:${pct}%;background:linear-gradient(90deg,var(--crimson-deep),var(--crimson))"></div>
+        </div>
+      </div>
+    `;
+  }).join('') || '<div class="text-[var(--ink-mute)] text-xs">无缺失</div>';
+}
+
+// ============================================================
+// Tab 2: 申请人
+// ============================================================
+async function loadApplicants(){
+  const data = await fetchJSON('/api/applicants');
+  const tbody = document.getElementById('applicant-tbody');
+  tbody.innerHTML = data.applicants.map(a => {
+    const conf = a.total_confidence || 0;
+    const confColor = conf >= 0.8 ? 'var(--emerald)' : conf >= 0.6 ? 'var(--amber)' : 'var(--crimson)';
+    return `
+      <tr class="row-hover border-t border-[var(--border-soft)] cursor-pointer" data-person="${a.person}">
+        <td class="py-4 px-6">
+          <div class="font-semibold">${a.person}</div>
+          <div class="text-[10px] text-[var(--ink-mute)] mt-0.5">${a.doc_types.length} 种材料类型</div>
+        </td>
+        <td class="text-center py-4 px-3 font-mono">${a.doc_count}</td>
+        <td class="text-center py-4 px-3"><span class="badge badge-warn">${a.missing_required_count}</span></td>
+        <td class="text-center py-4 px-3"><span class="badge badge-high">${a.risk_points_count}</span></td>
+        <td class="text-center py-4 px-3">
+          <div class="inline-flex items-center gap-2">
+            <div class="w-16 h-1.5 bg-[rgba(200,153,104,.1)] rounded">
+              <div class="h-full rounded" style="width:${conf*100}%;background:${confColor}"></div>
+            </div>
+            <span class="font-mono text-xs" style="color:${confColor}">${conf.toFixed(3)}</span>
+          </div>
+        </td>
+        <td class="text-center py-4 px-3"><span class="badge ${a.risk_level==='high'?'badge-high':'badge-medium'}">${a.risk_level==='high'?'高':'中'}</span></td>
+        <td class="text-center py-4 px-3"><span class="badge badge-reject">${a.decision}</span></td>
+        <td class="text-right py-4 px-6 font-mono text-xs text-[var(--ink-mute)]">${a.elapsed_seconds.toFixed(1)}s</td>
+      </tr>
+    `;
+  }).join('');
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => showApplicantDetail(tr.dataset.person));
+  });
+}
+
+async function showApplicantDetail(person){
+  document.getElementById('applicant-list-view').style.display = 'none';
+  const view = document.getElementById('applicant-detail-view');
+  view.style.display = 'block';
+  view.innerHTML = `<div class="panel panel-corner p-12 text-center"><div class="text-[var(--gold-dim)]">加载中...</div></div>`;
+  const r = await fetchJSON(`/api/applicant/${encodeURIComponent(person)}`);
+  const conf = r.confidence || {};
+  view.innerHTML = `
+    <div class="flex items-center justify-between mb-6">
+      <button class="btn-ghost" onclick="backToList()">← 返回列表</button>
+      <div class="text-[11px] tracking-[.2em] text-[var(--gold-dim)] uppercase">Applicant Detail</div>
+    </div>
+
+    <!-- 头部 -->
+    <div class="panel panel-corner p-8 mb-5 panel-glow">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="text-[11px] tracking-[.3em] text-[var(--gold-dim)] uppercase mb-2">申请人档案</div>
+          <h2 class="font-display text-[40px] font-semibold leading-none">${r.person}</h2>
+          <div class="text-[var(--ink-dim)] text-sm mt-3">${r.doc_count} 份材料 · 耗时 ${r.elapsed_seconds.toFixed(1)} 秒</div>
+        </div>
+        <div class="text-right">
+          <div class="mb-3"><span class="badge badge-reject text-sm px-4 py-2">${r.decision}</span></div>
+          <div class="text-[var(--ink-mute)] text-xs">风险等级</div>
+          <div class="mt-1"><span class="badge badge-high">${r.risk_level}</span></div>
+        </div>
+      </div>
+      ${r.reject_reason ? `
+        <div class="mt-6 p-4 border-l-2" style="border-color:var(--crimson);background:rgba(224,122,95,.05)">
+          <div class="text-[10px] tracking-[.2em] uppercase mb-2" style="color:var(--crimson)">拒贷原因</div>
+          <div class="text-sm text-[var(--ink)] leading-relaxed">${r.reject_reason}</div>
+        </div>
+      ` : ''}
+    </div>
+
+    <!-- 置信度卡片 -->
+    <div class="grid grid-cols-6 gap-3 mb-5">
+      ${confidenceCard('总置信度', conf.total_confidence, 'var(--gold-bright)')}
+      ${confidenceCard('OCR质量', conf.ocr_confidence, 'var(--emerald)')}
+      ${confidenceCard('规则置信', conf.rule_confidence, 'var(--amber)')}
+      ${confidenceCard('推理置信', conf.inference_confidence, 'var(--crimson)')}
+      ${confidenceCard('数据完整度', conf.data_completeness, 'var(--gold)')}
+      <div class="panel panel-corner p-4 text-center">
+        <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-2">硬错误/软告警</div>
+        <div class="font-display text-2xl font-semibold">
+          <span style="color:var(--crimson)">${conf.hard_error_count}</span>
+          <span class="text-[var(--ink-mute)] mx-1">/</span>
+          <span style="color:var(--amber)">${conf.warn_count}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 风险点 -->
+    <div class="panel panel-corner p-6 mb-5">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-display text-xl font-semibold">风险点明细 <span class="text-[var(--gold-dim)] text-sm font-sans">(${r.risk_points.length})</span></h3>
+        <span class="badge badge-gold">Risk Points</span>
+      </div>
+      <div class="space-y-4">
+        ${r.risk_points.map((rp, i) => {
+          const color = rp.level==='high'?'var(--crimson)':rp.level==='medium'?'var(--amber)':'var(--emerald)';
+          return `
+            <div class="relative pl-8 pb-4 border-l border-[var(--border-soft)] ml-3">
+              <div class="absolute -left-[7px] top-1 w-3 h-3 rounded-full" style="background:${color};box-shadow:0 0 8px ${color}"></div>
+              <div class="flex items-center gap-3 mb-2">
+                <span class="badge ${rp.level==='high'?'badge-high':'badge-medium'}">${rp.level}</span>
+                <span class="font-display font-semibold text-base" style="color:${color}">${rp.type}</span>
+              </div>
+              <div class="text-sm text-[var(--ink-dim)] leading-relaxed">${rp.detail}</div>
+              ${rp.policy_basis ? `<div class="mt-2 text-[11px] text-[var(--gold-dim)] font-mono">📜 ${rp.policy_basis}</div>` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-5">
+      <!-- 字段差异 -->
+      <div class="panel panel-corner p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h3 class="font-display text-xl font-semibold">字段差异对比</h3>
+          <span class="badge badge-gold">${r.field_discrepancies.length}</span>
+        </div>
+        <div class="space-y-4">
+          ${r.field_discrepancies.map(d => `
+            <div class="border border-[var(--border-soft)] p-4" style="background:rgba(224,122,95,.03)">
+              <div class="flex items-center justify-between mb-3">
+                <div class="font-mono text-sm gold-text">${d.field}</div>
+                <span class="badge badge-reject">${d.judgment}</span>
+              </div>
+              <div class="space-y-1.5">
+                ${d.values.map(v => `
+                  <div class="flex justify-between text-xs">
+                    <span class="text-[var(--ink-mute)]">${v.doc}</span>
+                    <span class="font-mono text-[var(--ink)]">${v.value}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('') || '<div class="text-[var(--ink-mute)] text-sm">无差异</div>'}
+        </div>
+      </div>
+
+      <!-- 缺失 + 评估 -->
+      <div class="space-y-5">
+        <div class="panel panel-corner p-6">
+          <h3 class="font-display text-xl font-semibold mb-4">缺失材料</h3>
+          ${r.missing_required && r.missing_required.length ? `
+            <div class="mb-3">
+              <div class="text-[10px] tracking-[.15em] uppercase text-[var(--crimson)] mb-2">必填缺失</div>
+              ${r.missing_required.map(m => `<div class="text-sm py-1.5 border-b border-[var(--border-soft)]">❌ ${m}</div>`).join('')}
+            </div>
+          ` : '<div class="text-[var(--emerald)] text-sm">✓ 必填齐全</div>'}
+          ${r.missing_optional && r.missing_optional.length ? `
+            <div class="mt-3">
+              <div class="text-[10px] tracking-[.15em] uppercase text-[var(--amber)] mb-2">选填缺失</div>
+              ${r.missing_optional.map(m => `<div class="text-sm py-1.5 text-[var(--ink-dim)]">⚠ ${m}</div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        ${r.eval_metrics ? `
+          <div class="panel panel-corner p-6">
+            <h3 class="font-display text-xl font-semibold mb-4">RAG 评估</h3>
+            ${evalRow('Faithfulness', r.eval_metrics.faithfulness.faithfulness, '忠实度')}
+            ${evalRow('Answer Relevancy', r.eval_metrics.answer_relevancy.answer_relevancy, '相关性')}
+            ${evalRow('Overall', r.eval_metrics.overall, '综合')}
+            <div class="mt-4 pt-4 border-t border-[var(--border-soft)] text-[11px] text-[var(--ink-mute)]">
+              原子陈述句：${r.eval_metrics.faithfulness.total_statements} · 被支持 ${r.eval_metrics.faithfulness.supported_statements}
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  view.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function confidenceCard(label, value, color){
+  const v = (value || 0).toFixed(3);
+  return `
+    <div class="panel panel-corner p-4 text-center">
+      <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-2">${label}</div>
+      <div class="font-display text-2xl font-semibold" style="color:${color}">${v}</div>
+    </div>
+  `;
+}
+
+function evalRow(label, value, sub){
+  const pct = (value * 100).toFixed(1);
+  const color = value >= 0.7 ? 'var(--emerald)' : value >= 0.4 ? 'var(--amber)' : 'var(--crimson)';
+  return `
+    <div class="mb-3">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="text-[var(--ink-dim)]">${label} <span class="text-[var(--ink-mute)]">${sub}</span></span>
+        <span class="font-mono" style="color:${color}">${value.toFixed(3)}</span>
+      </div>
+      <div class="h-1.5 bg-[rgba(200,153,104,.1)] rounded">
+        <div class="h-full rounded" style="width:${pct}%;background:${color}"></div>
+      </div>
+    </div>
+  `;
+}
+
+function backToList(){
+  document.getElementById('applicant-detail-view').style.display = 'none';
+  document.getElementById('applicant-list-view').style.display = 'block';
+}
+
+// ============================================================
+// Tab 3: 知识图谱
+// ============================================================
+const NODE_COLORS = {
+  Applicant: '#c89968',
+  IDNumber: '#e07a5f',
+  Phone: '#e3b341',
+  Address: '#6dbf85',
+  Employer: '#7d9bb8',
+  BankAccount: '#b88bc8',
+};
+const NODE_LABEL = {
+  Applicant:'申请人', IDNumber:'身份证号', Phone:'电话', Address:'地址', Employer:'雇主', BankAccount:'银行账户',
+};
+let kgNetwork = null;
+
+async function loadKG(){
+  window._kgLoaded = true;
+  const [kg, alerts] = await Promise.all([fetchJSON('/api/kg'), fetchJSON('/api/kg/alerts')]);
+
+  // 统计
+  const statsEl = document.getElementById('kg-stats');
+  const stats = kg.stats;
+  statsEl.innerHTML = `
+    <div class="flex justify-between"><span class="text-[var(--ink-mute)]">显示节点</span><span class="font-mono gold-text">${stats.node_total}</span></div>
+    <div class="flex justify-between"><span class="text-[var(--ink-mute)]">显示边</span><span class="font-mono gold-text">${stats.edge_total}</span></div>
+    <div class="flex justify-between text-[10px] text-[var(--ink-mute)]"><span>全量(含文档)</span><span class="font-mono">${stats.full_node_total} / ${stats.full_edge_total}</span></div>
+  `;
+
+  // 图例
+  const legendEl = document.getElementById('kg-legend');
+  const typeCount = {};
+  kg.nodes.forEach(n => typeCount[n.node_type] = (typeCount[n.node_type]||0)+1);
+  legendEl.innerHTML = Object.entries(NODE_COLORS).map(([t, c]) => `
+    <div class="flex items-center gap-2">
+      <span class="w-3 h-3 rounded-full" style="background:${c}"></span>
+      <span class="text-[var(--ink-dim)]">${NODE_LABEL[t]||t}</span>
+      <span class="ml-auto font-mono text-[var(--ink-mute)]">${typeCount[t]||0}</span>
+    </div>
+  `).join('');
+
+  // 告警
+  const alertEl = document.getElementById('kg-alerts');
+  document.getElementById('kg-alert-count').textContent = alerts.alerts.length;
+  const alertPersons = new Set(alerts.alerts.flatMap(a => a.applicants));
+  alertEl.innerHTML = alerts.alerts.map(a => `
+    <div class="border-l-2 pl-3 py-1" style="border-color:var(--crimson)">
+      <div class="font-semibold" style="color:var(--crimson)">${a.applicants.join(', ')}</div>
+      <div class="text-[var(--ink-dim)] mt-1 leading-snug">${a.evidence}</div>
+      <div class="text-[var(--gold-dim)] mt-1 font-mono text-[10px]">${a.rule}</div>
+    </div>
+  `).join('') || '<div class="text-[var(--ink-mute)]">无告警</div>';
+
+  // 渲染图谱
+  const alertSet = new Set(alerts.alerts.flatMap(a => a.applicants));
+  const nodes = kg.nodes.map(n => {
+    const isAlert = n.node_type === 'Applicant' && alertSet.has(n.name);
+    return {
+      id: n.id,
+      label: n.node_type === 'Applicant' ? n.name : (n.id.split('::')[1] || n.id).slice(0, 18),
+      group: n.node_type,
+      color: {
+        background: isAlert ? '#e07a5f' : (NODE_COLORS[n.node_type] || '#888'),
+        border: isAlert ? '#ff9a7f' : (NODE_COLORS[n.node_type] || '#888'),
+        highlight: { background: isAlert ? '#ff9a7f' : '#e0b582', border: '#fff' },
+      },
+      font: { color: '#e8e3d8', size: n.node_type==='Applicant'?14:10, face:'Manrope' },
+      size: n.node_type === 'Applicant' ? (isAlert?22:18) : 8,
+      borderWidth: isAlert ? 3 : 1,
+      shadow: isAlert ? {color:'rgba(224,122,95,.6)', size:15} : false,
+    };
+  });
+  const edges = kg.edges.map(e => ({
+    from: e.src, to: e.dst,
+    label: e.relation,
+    color: {color:'rgba(200,153,104,.25)', highlight:'#e0b582'},
+    font: {size:8, color:'#6b7d72', face:'JetBrains Mono'},
+    arrows: { to: { enabled: e.relation !== 'SHARED', scaleFactor: 0.3 } },
+    smooth: { type: 'continuous' },
+  }));
+
+  const container = document.getElementById('kg-network');
+  kgNetwork = new vis.Network(container, {nodes, edges}, {
+    physics: {
+      barnesHut: { gravitationalConstant: -8000, springLength: 80, springConstant: 0.02, damping: 0.4 },
+      stabilization: { iterations: 200 },
+    },
+    interaction: { hover: true, tooltipDelay: 100 },
+    nodes: { shape: 'dot' },
+    edges: { width: 0.5, selectionWidth: 2 },
+  });
+  setTimeout(() => kgNetwork.stopSimulation(), 3000);
+}
+
+document.getElementById('kg-fit').addEventListener('click', () => kgNetwork && kgNetwork.fit({animation:true}));
+let _edgesVisible = true;
+document.getElementById('kg-toggle-edges').addEventListener('click', () => {
+  if (!kgNetwork) return;
+  _edgesVisible = !_edgesVisible;
+  kgNetwork.setOptions({ edges: { hidden: !_edgesVisible } });
+});
+
+// ============================================================
+// Tab 4: RAG 检索
+// ============================================================
+async function ragSearch(query){
+  if (!query.trim()) return;
+  document.getElementById('rag-loading').style.display = 'block';
+  document.getElementById('rag-results').style.display = 'none';
+  try {
+    const r = await fetchJSON('/api/rag/search', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({query, top_k_regulation:3, top_k_policy:5, top_k_case:3})
+    });
+    renderRagResults(r);
+  } catch (e) {
+    document.getElementById('rag-loading').innerHTML = `<div class="text-[var(--crimson)]">检索失败: ${e.message}</div>`;
+  } finally {
+    document.getElementById('rag-loading').style.display = 'none';
+  }
+}
+
+function renderRagResults(r){
+  document.getElementById('rag-results').style.display = 'block';
+  renderLayer('reg', r.regulation_chunks || []);
+  renderLayer('pol', r.policy_chunks || []);
+  renderLayer('case', r.case_chunks || []);
+}
+
+function renderLayer(key, chunks){
+  document.getElementById(`rag-c-${key}`).textContent = chunks.length;
+  const el = document.getElementById(`rag-${key}-list`);
+  if (!chunks.length) {
+    el.innerHTML = '<div class="text-[var(--ink-mute)] text-xs">无结果</div>';
+    return;
+  }
+  // 找最高 rrf 用于归一化条
+  const maxRrf = Math.max(...chunks.map(c => c.rrf_score || 0)) || 1;
+  el.innerHTML = chunks.map((c, i) => {
+    const rrf = c.rrf_score || 0;
+    const pct = (rrf / maxRrf) * 100;
+    const dense = c.score_dense !== null && c.score_dense !== undefined ? c.score_dense.toFixed(3) : '—';
+    const sparse = c.score_sparse_norm !== null && c.score_sparse_norm !== undefined ? c.score_sparse_norm.toFixed(3) : '—';
+    return `
+      <div class="border border-[var(--border-soft)] p-3 hover:border-[var(--gold-dim)] transition" style="background:rgba(200,153,104,.02)">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-mono text-[10px] text-[var(--gold-dim)]">${(c.source||'').replace('.md','')}</div>
+          <div class="font-mono text-xs gold-text">#${i+1} · ${rrf.toFixed(4)}</div>
+        </div>
+        ${c.article ? `<div class="text-[11px] text-[var(--ink-dim)] mb-2 font-display italic">${c.article}</div>` : ''}
+        <div class="text-xs text-[var(--ink-dim)] leading-relaxed mb-2 line-clamp-3" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${(c.content||'').slice(0, 200)}</div>
+        <div class="rrf-bar mb-1.5"><div style="width:${pct}%"></div></div>
+        <div class="flex justify-between text-[10px] font-mono text-[var(--ink-mute)]">
+          <span>dense ${dense}</span>
+          <span>sparse ${sparse}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+document.getElementById('rag-search-btn').addEventListener('click', () => ragSearch(document.getElementById('rag-input').value));
+document.getElementById('rag-input').addEventListener('keydown', e => { if (e.key === 'Enter') ragSearch(e.target.value); });
+document.querySelectorAll('.rag-example').forEach(b => b.addEventListener('click', () => {
+  document.getElementById('rag-input').value = b.dataset.q;
+  ragSearch(b.dataset.q);
+}));
+
+// ============================================================
+// 启动
+// ============================================================
+renderPipeline();
+Promise.all([loadDashboard(), loadApplicants()]).catch(e => {
+  console.error(e);
+  document.getElementById('kpi-applicants').textContent = 'ERR';
+});
+</script>
+</body>
+</html>

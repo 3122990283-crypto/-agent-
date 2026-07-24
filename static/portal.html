@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贷款材料预审门户 · Aurum Sentinel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --bg:#0a1410; --bg-2:#0d1a14; --panel:#101e18; --panel-2:#142821;
+    --border:#1f3a2e; --border-soft:#16302a;
+    --gold:#c89968; --gold-bright:#e0b582; --gold-dim:#8a6a45;
+    --crimson:#e07a5f; --crimson-deep:#c45a3f;
+    --emerald:#6dbf85; --amber:#e3b341;
+    --ink:#e8e3d8; --ink-dim:#a8b5ac; --ink-mute:#6b7d72;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Manrope',sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(ellipse 1000px 500px at 50% -10%, rgba(200,153,104,.10), transparent 60%),
+      radial-gradient(ellipse 800px 400px at 90% 100%, rgba(109,191,133,.04), transparent 60%),
+      linear-gradient(180deg, #0a1410 0%, #0c1813 100%);
+    min-height:100vh;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(200,153,104,.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,153,104,.02) 1px, transparent 1px);
+    background-size:56px 56px;
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 30%, black 30%, transparent 90%);
+  }
+  .font-display{font-family:'Fraunces',serif;font-optical-sizing:auto}
+  .font-mono{font-family:'JetBrains Mono',monospace}
+  .gold-text{color:var(--gold-bright)}
+  .gold-grad{background:linear-gradient(135deg,var(--gold-bright),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .panel{
+    background:linear-gradient(180deg, rgba(20,40,33,.55), rgba(16,30,24,.55));
+    border:1px solid var(--border);
+    backdrop-filter:blur(8px); position:relative;
+  }
+  .panel-glow::before{
+    content:'';position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(135deg, rgba(200,153,104,.06), transparent 40%);
+  }
+  .panel-corner{position:relative}
+  .panel-corner::before,.panel-corner::after{
+    content:'';position:absolute;width:14px;height:14px;border:1px solid var(--gold);opacity:.5;
+  }
+  .panel-corner::before{top:-1px;left:-1px;border-right:none;border-bottom:none}
+  .panel-corner::after{bottom:-1px;right:-1px;border-left:none;border-top:none}
+  .divider-gold{height:1px;background:linear-gradient(90deg,transparent,var(--gold-dim) 20%,var(--gold) 50%,var(--gold-dim) 80%,transparent);opacity:.5}
+  .stat-num{font-family:'Fraunces',serif;font-weight:600;font-variant-numeric:tabular-nums}
+  .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:2px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+  .badge-reject{background:rgba(224,122,95,.12);color:var(--crimson);border:1px solid rgba(224,122,95,.3)}
+  .badge-pass{background:rgba(109,191,133,.12);color:var(--emerald);border:1px solid rgba(109,191,133,.3)}
+  .badge-warn{background:rgba(227,179,65,.12);color:var(--amber);border:1px solid rgba(227,179,65,.3)}
+  .badge-gold{background:rgba(200,153,104,.12);color:var(--gold-bright);border:1px solid rgba(200,153,104,.35)}
+  .badge-high{background:rgba(224,122,95,.15);color:var(--crimson);border:1px solid rgba(224,122,95,.4)}
+  .badge-medium{background:rgba(227,179,65,.15);color:var(--amber);border:1px solid rgba(227,179,65,.4)}
+  .btn-gold{
+    background:linear-gradient(135deg,var(--gold),var(--gold-dim));
+    color:#1a1208;font-weight:600;padding:14px 32px;border:none;cursor:pointer;
+    transition:all .25s;letter-spacing:.04em;font-size:14px;
+  }
+  .btn-gold:hover:not(:disabled){background:linear-gradient(135deg,var(--gold-bright),var(--gold));box-shadow:0 0 24px rgba(200,153,104,.35);transform:translateY(-1px)}
+  .btn-gold:disabled{opacity:.4;cursor:not-allowed}
+  .btn-ghost{
+    background:transparent;color:var(--ink-dim);border:1px solid var(--border);
+    padding:11px 22px;cursor:pointer;transition:all .2s;font-size:13px;
+  }
+  .btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold-bright)}
+  input,textarea,select{
+    background:rgba(10,20,16,.6);border:1px solid var(--border);color:var(--ink);
+    padding:12px 16px;font-family:'Manrope';font-size:14px;outline:none;transition:border .2s;width:100%;
+  }
+  input:focus,textarea:focus{border-color:var(--gold-dim)}
+  .fade-in{animation:fadeIn .5s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 8px var(--emerald);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .scroll-thin::-webkit-scrollbar{width:6px;height:6px}
+  .scroll-thin::-webkit-scrollbar-track{background:transparent}
+  .scroll-thin::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  /* 上传拖拽区 */
+  .drop-zone{
+    border:1.5px dashed var(--border);
+    transition:all .25s;
+    background:rgba(200,153,104,.015);
+  }
+  .drop-zone.dragover{
+    border-color:var(--gold);
+    background:rgba(200,153,104,.08);
+    transform:scale(1.005);
+  }
+  .product-card{
+    border:1px solid var(--border);
+    background:rgba(200,153,104,.02);
+    transition:all .25s; cursor:pointer; position:relative;
+  }
+  .product-card:hover{border-color:var(--gold-dim);background:rgba(200,153,104,.05)}
+  .product-card.selected{
+    border-color:var(--gold);
+    background:rgba(200,153,104,.08);
+    box-shadow:0 0 0 1px var(--gold), 0 0 24px rgba(200,153,104,.15);
+  }
+  .product-card.selected::after{
+    content:'';position:absolute;top:10px;right:10px;width:18px;height:18px;
+    background:var(--gold);border-radius:50%;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 8l4 4 6-7' stroke='%231a1208' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-size:14px;background-position:center;background-repeat:no-repeat;
+  }
+  .file-chip{
+    display:flex;align-items:center;gap:10px;padding:10px 14px;
+    border:1px solid var(--border-soft);background:rgba(200,153,104,.03);
+    transition:all .2s;
+  }
+  .file-chip:hover{border-color:var(--gold-dim)}
+  .step-pill{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 14px;
+    border:1px solid var(--border);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-mute);
+  }
+  .step-pill.active{border-color:var(--gold);color:var(--gold-bright);background:rgba(200,153,104,.06)}
+  .step-pill.done{border-color:var(--emerald);color:var(--emerald)}
+  .progress-track{height:3px;background:rgba(200,153,104,.1);overflow:hidden;border-radius:2px}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));transition:width .5s ease;box-shadow:0 0 12px rgba(200,153,104,.5)}
+  .timeline-step{position:relative;padding-left:36px;padding-bottom:20px}
+  .timeline-step::before{content:'';position:absolute;left:13px;top:24px;bottom:0;width:1px;background:var(--border)}
+  .timeline-step:last-child::before{display:none}
+  .timeline-dot{
+    position:absolute;left:6px;top:2px;width:16px;height:16px;border-radius:50%;
+    border:2px solid var(--border);background:var(--bg);transition:all .3s;
+  }
+  .timeline-step.active .timeline-dot{border-color:var(--gold);background:var(--gold);box-shadow:0 0 12px rgba(200,153,104,.6)}
+  .timeline-step.done .timeline-dot{border-color:var(--emerald);background:var(--emerald)}
+  .timeline-step.error .timeline-dot{border-color:var(--crimson);background:var(--crimson)}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--gold-dim);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .view{display:none}
+  .view.active{display:block;animation:fadeIn .4s ease}
+
+  /* 卡片淡入（错峰） */
+  .stagger{opacity:0;transform:translateY(14px);animation:staggerIn .55s ease forwards}
+  @keyframes staggerIn{to{opacity:1;transform:none}}
+  .stagger:nth-child(1){animation-delay:.05s}
+  .stagger:nth-child(2){animation-delay:.15s}
+  .stagger:nth-child(3){animation-delay:.25s}
+  .stagger:nth-child(4){animation-delay:.35s}
+  .stagger:nth-child(5){animation-delay:.45s}
+  .stagger:nth-child(6){animation-delay:.55s}
+  .stagger:nth-child(7){animation-delay:.65s}
+  .stagger:nth-child(8){animation-delay:.75s}
+
+  /* 决策大字 */
+  .decision-mega{
+    font-family:'Fraunces',serif;font-weight:700;font-size:46px;line-height:1.1;
+    letter-spacing:.01em;
+  }
+  .score-ring{transform:rotate(-90deg)}
+  .score-ring circle{transition:stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1)}
+
+  /* 7步闭环横向条 */
+  .pipeline{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;position:relative}
+  .pipeline::before{
+    content:'';position:absolute;left:14px;right:14px;top:18px;height:2px;
+    background:linear-gradient(90deg,var(--border) 0%,var(--border) 100%);
+    z-index:0;
+  }
+  .pipeline-node{
+    position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;text-align:center;
+  }
+  .pipeline-node .dot{
+    width:38px;height:38px;border-radius:50%;background:var(--bg-2);border:2px solid var(--border);
+    display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono';font-size:12px;
+    color:var(--ink-mute);transition:all .4s;
+  }
+  .pipeline-node.done .dot{border-color:var(--emerald);background:rgba(109,191,133,.12);color:var(--emerald);box-shadow:0 0 16px rgba(109,191,133,.25)}
+  .pipeline-node.error .dot{border-color:var(--crimson);background:rgba(224,122,95,.12);color:var(--crimson)}
+  .pipeline-node.active .dot{border-color:var(--gold);background:rgba(200,153,104,.15);color:var(--gold-bright);box-shadow:0 0 18px rgba(200,153,104,.35);animation:pulseGold 1.8s infinite}
+  @keyframes pulseGold{0%,100%{box-shadow:0 0 14px rgba(200,153,104,.3)}50%{box-shadow:0 0 22px rgba(200,153,104,.55)}}
+  .pipeline-node .label{font-size:11px;color:var(--ink-dim);margin-top:8px;letter-spacing:.04em}
+  .pipeline-node .sub{font-size:10px;color:var(--ink-mute);margin-top:3px;line-height:1.4;max-width:110px}
+  .pipeline-node.done .label{color:var(--emerald)}
+
+  /* Agent 思考过程控制台 */
+  .console{
+    background:rgba(8,15,12,.7);border:1px solid var(--border-soft);border-radius:2px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.7;
+    padding:14px 16px;max-height:220px;overflow-y:auto;
+  }
+  .console .ln{display:flex;gap:10px;align-items:flex-start}
+  .console .ts{color:var(--gold-dim);flex-shrink:0;font-size:10px;padding-top:1px}
+  .console .tag{flex-shrink:0;font-size:10px;padding:1px 6px;border:1px solid;border-radius:1px;letter-spacing:.05em}
+  .console .tag.tool{color:var(--gold-bright);border-color:rgba(200,153,104,.4)}
+  .console .tag.kg{color:var(--emerald);border-color:rgba(109,191,133,.4)}
+  .console .tag.rag{color:var(--amber);border-color:rgba(227,179,65,.4)}
+  .console .tag.llm{color:var(--crimson);border-color:rgba(224,122,95,.4)}
+  .console .tag.sys{color:var(--ink-mute);border-color:var(--border)}
+  .console .msg{color:var(--ink-dim);word-break:break-all}
+  .console .cursor{display:inline-block;width:8px;height:14px;background:var(--gold);animation:blink 1s steps(2) infinite;vertical-align:middle}
+  @keyframes blink{50%{opacity:0}}
+
+  /* 时间线 active 详细技术说明 */
+  .timeline-step .tech-detail{
+    margin-top:8px;padding:8px 12px;background:rgba(200,153,104,.04);
+    border-left:2px solid var(--gold-dim);font-size:11px;color:var(--ink-dim);
+    font-family:'JetBrains Mono',monospace;line-height:1.6;display:none;
+  }
+  .timeline-step.active .tech-detail{display:block;animation:fadeIn .4s ease}
+  .timeline-step.done .tech-detail{display:none}
+
+  /* 雷达图 / 条形图 */
+  .dim-bar{height:8px;background:rgba(200,153,104,.08);border-radius:1px;overflow:hidden;position:relative}
+  .dim-bar .fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-bright));transition:width 1.2s cubic-bezier(.2,.7,.2,1);box-shadow:0 0 8px rgba(200,153,104,.4)}
+  .dim-bar .fill.warn{background:linear-gradient(90deg,var(--amber),#f3c969)}
+  .dim-bar .fill.bad{background:linear-gradient(90deg,var(--crimson),var(--crimson-deep))}
+
+  /* 代码块 / 引用 */
+  .ref-card{
+    border:1px solid var(--border-soft);background:rgba(200,153,104,.02);padding:10px 14px;
+    border-left:2px solid var(--gold-dim);transition:all .2s;
+  }
+  .ref-card:hover{border-left-color:var(--gold);background:rgba(200,153,104,.05)}
+
+  /* KG 告警卡 */
+  .kg-alert{
+    border:1px solid rgba(224,122,95,.3);background:rgba(224,122,95,.05);padding:12px 16px;
+    border-left:3px solid var(--crimson);position:relative;
+  }
+  .kg-alert::before{content:'';position:absolute;top:8px;right:10px;width:8px;height:8px;border-radius:50%;background:var(--crimson);box-shadow:0 0 10px var(--crimson);animation:pulse 1.5s infinite}
+
+  /* 规则行 */
+  .rule-row{
+    display:grid;grid-template-columns:60px 90px 1fr 90px;gap:10px;align-items:center;
+    padding:10px 12px;border-bottom:1px solid var(--border-soft);font-size:12px;
+    transition:background .2s;
+  }
+  .rule-row:hover{background:rgba(200,153,104,.03)}
+  .rule-row:last-child{border-bottom:none}
+
+  /* 审核按钮区 */
+  .review-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .btn-review{
+    padding:18px;border:1px solid var(--border);background:rgba(200,153,104,.02);
+    cursor:pointer;transition:all .25s;display:flex;flex-direction:column;align-items:center;gap:6px;
+    font-family:'Manrope';color:var(--ink-dim);
+  }
+  .btn-review:hover{transform:translateY(-2px)}
+  .btn-review.approve{border-color:rgba(109,191,133,.4)}
+  .btn-review.approve:hover{background:rgba(109,191,133,.08);box-shadow:0 0 24px rgba(109,191,133,.2);color:var(--emerald)}
+  .btn-review.reject{border-color:rgba(224,122,95,.4)}
+  .btn-review.reject:hover{background:rgba(224,122,95,.08);box-shadow:0 0 24px rgba(224,122,95,.2);color:var(--crimson)}
+  .btn-review.supplement{border-color:rgba(227,179,65,.4)}
+  .btn-review.supplement:hover{background:rgba(227,179,65,.08);box-shadow:0 0 24px rgba(227,179,65,.2);color:var(--amber)}
+  .btn-review .ico{font-size:22px}
+  .btn-review .ttl{font-family:'Fraunces',serif;font-weight:600;font-size:15px}
+  .btn-review .desc{font-size:10px;color:var(--ink-mute);letter-spacing:.05em}
+
+  /* 演示按钮 */
+  .btn-demo{
+    background:linear-gradient(135deg,rgba(200,153,104,.15),rgba(200,153,104,.05));
+    border:1px solid var(--gold-dim);color:var(--gold-bright);
+    padding:10px 20px;cursor:pointer;transition:all .25s;font-size:13px;
+    display:inline-flex;align-items:center;gap:8px;letter-spacing:.04em;
+  }
+  .btn-demo:hover{border-color:var(--gold);background:linear-gradient(135deg,rgba(200,153,104,.25),rgba(200,153,104,.1));box-shadow:0 0 18px rgba(200,153,104,.25)}
+
+  /* 信息区域标题 */
+  .section-title{
+    display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;
+  }
+  .section-title h3{font-family:'Fraunces',serif;font-weight:600;font-size:18px;letter-spacing:.02em}
+  .section-title .meta{font-size:11px;color:var(--gold-dim);letter-spacing:.1em;text-transform:uppercase}
+
+  /* OCR 抽取字段表 */
+  .ocr-card{
+    border:1px solid var(--border-soft);background:rgba(10,20,16,.4);padding:12px 14px;
+    transition:all .2s;
+  }
+  .ocr-card:hover{border-color:var(--gold-dim)}
+  .ocr-fields{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 14px;margin-top:8px}
+  .ocr-fields .f{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px dotted var(--border-soft)}
+  .ocr-fields .f .k{color:var(--ink-mute)}
+  .ocr-fields .f .v{color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:10px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* Toast */
+  .toast{
+    position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);
+    background:linear-gradient(135deg,var(--panel-2),var(--panel));border:1px solid var(--gold);
+    padding:12px 24px;color:var(--gold-bright);font-size:13px;z-index:1000;
+    transition:transform .35s cubic-bezier(.2,.7,.2,1);box-shadow:0 8px 32px rgba(0,0,0,.4),0 0 24px rgba(200,153,104,.2);
+  }
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<header class="relative z-10 border-b border-[var(--border)]" style="background:rgba(10,20,16,.7);backdrop-filter:blur(12px)">
+  <div class="max-w-[1200px] mx-auto px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
+        <path d="M18 2L34 10V26L18 34L2 26V10L18 2Z" stroke="url(#g1)" stroke-width="1.2" fill="rgba(200,153,104,.05)"/>
+        <circle cx="18" cy="18" r="3" fill="var(--gold)"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#e0b582"/><stop offset="1" stop-color="#8a6a45"/></linearGradient></defs>
+      </svg>
+      <div>
+        <div class="font-display text-[16px] font-semibold gold-grad leading-none">Aurum Sentinel</div>
+        <div class="text-[10px] tracking-[.25em] text-[var(--ink-mute)] uppercase mt-1">申请人门户 · Applicant Portal</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-5 text-[12px]">
+      <div class="flex items-center gap-2 text-[var(--ink-mute)]">
+        <span class="pulse-dot"></span><span>预审引擎在线</span>
+      </div>
+      <a href="/" class="text-[var(--gold-dim)] hover:text-[var(--gold-bright)] transition">→ 风控控制台</a>
+    </div>
+  </div>
+  <div class="divider-gold"></div>
+</header>
+
+<main class="relative z-10 max-w-[1200px] mx-auto px-8 py-10">
+
+<!-- ============ View 1: 提交表单 ============ -->
+<section id="view-form" class="view active">
+
+  <!-- Hero -->
+  <div class="text-center mb-12">
+    <div class="text-[11px] tracking-[.35em] text-[var(--gold-dim)] uppercase mb-4">Credit Pre-Audit Portal</div>
+    <h1 class="font-display text-[52px] font-semibold leading-tight mb-4">
+      开启您的<span class="gold-grad italic">智能预审</span>
+    </h1>
+    <p class="text-[var(--ink-dim)] text-base max-w-[560px] mx-auto leading-relaxed">
+      上传贷款申请材料，Agent 自动识别产品类型并完成 13 步预审<br>
+      OCR + 跨文档比对 + 知识图谱反欺诈 + RAG 法规检索
+    </p>
+    <div class="mt-6">
+      <button class="btn-demo" id="demo-btn" type="button">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M5 3l8 5-8 5V3z" fill="currentColor"/></svg>
+        演示模式 · 一键填充样例
+      </button>
+    </div>
+  </div>
+
+  <!-- 步骤指示 -->
+  <div class="flex justify-center gap-3 mb-10">
+    <div class="step-pill active" id="pill-1"><span>01</span>上传材料</div>
+    <div class="step-pill" id="pill-2"><span>02</span>智能预审</div>
+    <div class="step-pill" id="pill-3"><span>03</span>查看结果</div>
+  </div>
+
+  <!-- 表单卡片 -->
+  <div class="panel panel-corner panel-glow p-10 max-w-[860px] mx-auto">
+
+    <!-- Step 1: 申请人 + 上传 -->
+    <div class="mb-8">
+      <div class="flex items-baseline gap-3 mb-5">
+        <div class="font-mono text-[var(--gold-dim)] text-sm">01</div>
+        <h2 class="font-display text-2xl font-semibold">上传申请材料</h2>
+        <span class="text-xs text-[var(--ink-mute)] ml-auto">Agent 自动识别产品类型</span>
+      </div>
+
+      <div class="mb-5">
+        <label class="text-[11px] tracking-[.15em] uppercase text-[var(--gold-dim)] block mb-2">申请人姓名（可选）</label>
+        <input id="person-name" type="text" placeholder="如：张三（留空将自动生成编号）">
+      </div>
+
+      <!-- 拖拽上传区 -->
+      <div class="drop-zone p-10 text-center cursor-pointer" id="drop-zone">
+        <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.bmp,.pdf,.webp,.tiff" style="display:none">
+        <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" class="mx-auto mb-4 opacity-60">
+          <path d="M24 32V8m0 0l-8 8m8-8l8 8M8 32v6a4 4 0 004 4h24a4 4 0 004-4v-6" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="font-display text-lg mb-2">拖拽文件/文件夹到此处 · 或<span class="gold-text underline" id="pick-files">点击选择文件</span> · <span class="gold-text underline" id="pick-folder">选择文件夹</span></div>
+        <div class="text-[11px] text-[var(--ink-mute)] tracking-wider">支持 JPG / PNG / BMP / PDF / WEBP / TIFF · 可多选</div>
+      </div>
+
+      <!-- 已选文件列表 -->
+      <div id="file-list" class="mt-5 space-y-2" style="display:none"></div>
+
+      <!-- 提示 -->
+      <div class="mt-5 p-4 border-l-2" style="border-color:var(--gold-dim);background:rgba(200,153,104,.03)">
+        <div class="text-[11px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-2">智能识别说明</div>
+        <div class="text-xs text-[var(--ink-dim)] leading-relaxed">
+          支持三种贷款产品：<span class="gold-text">消费贷</span> · <span class="gold-text">经营贷</span> · <span class="gold-text">房贷</span><br>
+          Agent 将根据材料组合自动识别产品类型，无需手动选择。建议上传 3-8 份材料（身份证、申请表、银行流水、收入证明等）。
+        </div>
+      </div>
+    </div>
+
+    <!-- 提交按钮 -->
+    <div class="flex justify-end gap-3 mt-8">
+      <button class="btn-ghost" id="reset-btn">重置</button>
+      <button class="btn-gold" id="submit-btn" disabled>
+        <span id="submit-text">提交预审</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ View 2: 进度 ============ -->
+<section id="view-progress" class="view">
+  <div class="text-center mb-10">
+    <div class="text-[11px] tracking-[.35em] text-[var(--gold-dim)] uppercase mb-4">Pre-Audit In Progress</div>
+    <h1 class="font-display text-[42px] font-semibold leading-tight mb-3">
+      正在<span class="gold-grad italic">智能预审</span>
+    </h1>
+    <p class="text-[var(--ink-dim)] text-sm" id="progress-person">--</p>
+  </div>
+
+  <div class="panel panel-corner panel-glow p-10 max-w-[920px] mx-auto">
+    <!-- 产品识别结果（进度中实时展示） -->
+    <div id="progress-product-card" class="mb-8 pb-6" style="border-bottom:1px solid rgba(200,153,104,.15);display:none">
+      <div class="flex items-center gap-2 mb-3">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="text-[11px] tracking-[.25em] uppercase text-[var(--gold-dim)]">Agent 自动识别产品</span>
+        <span class="text-[10px] text-[var(--ink-mute)] ml-auto font-mono">基于材料组合智能判断</span>
+      </div>
+      <div class="flex items-end gap-6">
+        <div>
+          <div class="font-display text-3xl font-semibold gold-grad" id="progress-product-name">识别中...</div>
+          <div class="text-[var(--ink-mute)] text-xs mt-1 font-mono" id="progress-product-key">--</div>
+        </div>
+        <div class="text-center">
+          <div class="font-display text-2xl font-bold" id="progress-product-conf" style="color:var(--emerald)">--%</div>
+          <div class="text-[10px] text-[var(--ink-mute)] tracking-wider">识别置信度</div>
+        </div>
+        <div class="flex-1">
+          <div class="text-[10px] text-[var(--ink-mute)] tracking-wider mb-1">识别依据</div>
+          <div class="text-sm text-[var(--ink-dim)] leading-relaxed" id="progress-product-evidence">正在分析材料类型组合...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="mb-8">
+      <div class="flex justify-between text-xs mb-2">
+        <span class="text-[var(--gold-dim)] tracking-wider uppercase" id="progress-step">初始化...</span>
+        <span class="font-mono gold-text" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-bar" style="width:0%"></div></div>
+    </div>
+
+    <!-- 时间线 -->
+    <div class="space-y-1">
+      <div class="timeline-step" id="ts-0">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 0 · 产品识别</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">Agent 自动判断贷款产品类型</div>
+        <div class="tech-detail">
+          ▸ 基于 <span class="gold-text">材料组合特征</span> 智能识别产品：消费贷 / 经营贷 / 房贷<br>
+          ▸ 企业材料 → 经营贷 · 不动产材料 → 房贷 · 收入+流水 → 消费贷<br>
+          ▸ 工具：<span class="gold-text">tool_business_entry</span> · 置信度 & evidence 输出
+        </div>
+      </div>
+      <div class="timeline-step" id="ts-1">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 1-2 · OCR + 分类 + 抽取</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">PaddleOCR-VL 1.6 + 千问 LLM 多线程解析</div>
+        <div class="tech-detail">
+          ▸ 调用 <span class="gold-text">PaddleOCR-VL</span> 识别图片文本块 · 多线程并发解析 N 份材料<br>
+          ▸ 调用 <span class="gold-text">Qwen2.5-VLM</span> 进行文档分类与结构化字段抽取<br>
+          ▸ 当前工具：<span class="gold-text">tool_ocr_extract</span> · ThreadPoolExecutor(max_workers=4)
+        </div>
+      </div>
+      <div class="timeline-step" id="ts-2">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 3-4 · 字段校验 + 跨文档比对</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">正则格式校验 + 姓名/证件号/收入一致性</div>
+        <div class="tech-detail">
+          ▸ <span class="gold-text">L2 字段逻辑层</span>：身份证号正则 ^\d{17}[\dXx]$ · 手机号 · 金额格式<br>
+          ▸ <span class="gold-text">跨文档一致性</span>：姓名 / 证件号 / 收入在多份材料间比对<br>
+          ▸ 输出 findings[] · 含 rule_id / severity / evidence
+        </div>
+      </div>
+      <div class="timeline-step" id="ts-3">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 5-6 · 缺失检测 + 规则引擎</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">必填/选填缺失 + 硬错误/软告警</div>
+        <div class="tech-detail">
+          ▸ <span class="gold-text">L1 完整性层</span>：必填材料缺失检测 → severity=block<br>
+          ▸ <span class="gold-text">L3 业务规则层</span>：经营资质有效期 / 收入负债比 / 逾期次数<br>
+          ▸ 正在执行 <span class="gold-text">四层规则引擎</span> L1→L2→L3→L4
+        </div>
+      </div>
+      <div class="timeline-step" id="ts-4">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 7-8 · 推理风险 + 外部核验</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">千问语义风险点 + 黑名单/三要素</div>
+        <div class="tech-detail">
+          ▸ <span class="gold-text">Qwen2.5-72B</span> 语义推理：material_contradiction / suspected_fraud / income_mismatch<br>
+          ▸ 输出结构化 risk_points[] · 含 type / level / reason<br>
+          ▸ 工具：<span class="gold-text">tool_llm_explain</span>
+        </div>
+      </div>
+      <div class="timeline-step" id="ts-5">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 10-12 · RAG + KG + GraphRAG</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">Hybrid 检索 + 反欺诈图谱 + 条件式决策链</div>
+        <div class="tech-detail">
+          ▸ <span class="gold-text">BGE-M3 Dense + BM25 Sparse</span> · RRF 融合检索法规/制度/案例<br>
+          ▸ <span class="gold-text">Neo4j 知识图谱</span> 反欺诈：同一手机号/地址/账户多申请人检测<br>
+          ▸ 工具：<span class="gold-text">tool_rag_search</span> + <span class="gold-text">tool_kg_fraud</span>
+        </div>
+      </div>
+      <div class="timeline-step" id="ts-6">
+        <div class="timeline-dot"></div>
+        <div class="font-display font-semibold text-base">Step 9 + 13 · 决策报告 + Ragas 评估</div>
+        <div class="text-xs text-[var(--ink-mute)] mt-1">综合 RAG/KG/GraphRAG 生成报告 + faithfulness/relevancy</div>
+        <div class="tech-detail">
+          ▸ <span class="gold-text">7 维度加权评分</span>：completeness / field_logic / business_rule / fraud / ocr_confidence / rag_evidence / llm_semantic<br>
+          ▸ 生成决策建议 + 一票否决 override 检测<br>
+          ▸ 工具：<span class="gold-text">tool_risk_scoring</span> · 即将完成
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent 思考过程控制台 -->
+    <div class="mt-8">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="pulse-dot"></span>
+          <span class="text-[11px] tracking-[.2em] uppercase text-[var(--gold-dim)]">Agent 思考过程</span>
+        </div>
+        <span class="text-[10px] text-[var(--ink-mute)] font-mono" id="agent-clock">--:--:--</span>
+      </div>
+      <div class="console scroll-thin" id="agent-console">
+        <div class="ln"><span class="ts">00:00:00</span><span class="tag sys">SYS</span><span class="msg">等待 Agent 启动...</span></div>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center text-[var(--ink-mute)] text-xs flex items-center justify-center gap-2">
+      <span class="spinner"></span>
+      <span>预计耗时 1-3 分钟 · 请勿关闭页面</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ View 3: 结果 ============ -->
+<section id="view-result" class="view">
+  <div id="result-content"></div>
+</section>
+
+<!-- ============ 历史侧栏 ============ -->
+<div class="mt-16">
+  <div class="flex items-center justify-between mb-5">
+    <h2 class="font-display text-2xl font-semibold">最近提交</h2>
+    <button class="btn-ghost text-xs" onclick="loadHistory()">刷新</button>
+  </div>
+  <div id="history-list" class="grid grid-cols-3 gap-4"></div>
+</div>
+
+</main>
+
+<footer class="relative z-10 mt-16 py-6 border-t border-[var(--border)] text-center text-[11px] text-[var(--ink-mute)]">
+  <span class="font-display gold-text">Aurum Sentinel</span> · 信贷材料预审智能体 · 演示用途 · 请勿上传真实敏感信息
+</footer>
+
+<script>
+const ALLOWED_EXT = ['.jpg','.jpeg','.png','.bmp','.pdf','.webp','.tiff'];
+let selectedFiles = [];
+let pollTimer = null;
+let currentTaskId = null;
+
+// ===== 文件选择 =====
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const folderInput = document.getElementById('folder-input');
+
+document.getElementById('pick-files').addEventListener('click', (e) => {
+  e.stopPropagation();
+  fileInput.click();
+});
+document.getElementById('pick-folder').addEventListener('click', (e) => {
+  e.stopPropagation();
+  folderInput.click();
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+folderInput.addEventListener('change', e => handleFiles(e.target.files));
+
+['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation();
+  dropZone.classList.add('dragover');
+}));
+['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => {
+  e.preventDefault(); e.stopPropagation();
+  dropZone.classList.remove('dragover');
+}));
+dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+
+function handleFiles(files){
+  const valid = [];
+  for (const f of files){
+    const ext = '.' + (f.name.split('.').pop() || '').toLowerCase();
+    if (ALLOWED_EXT.includes(ext)) valid.push(f);
+  }
+  if (valid.length === 0) return;
+  selectedFiles = selectedFiles.concat(valid);
+  renderFileList();
+  updateSubmitBtn();
+}
+
+function renderFileList(){
+  const list = document.getElementById('file-list');
+  if (!selectedFiles.length){
+    list.style.display = 'none';
+    return;
+  }
+  list.style.display = 'block';
+  list.innerHTML = selectedFiles.map((f, i) => {
+    const size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+' MB' : (f.size/1024).toFixed(0)+' KB';
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    const icon = ext === 'pdf' ? '📄' : '🖼';
+    return `
+      <div class="file-chip">
+        <span style="font-size:18px">${icon}</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm truncate">${f.name}</div>
+          <div class="text-[10px] text-[var(--ink-mute)] font-mono">${size} · ${ext.toUpperCase()}</div>
+        </div>
+        <button class="text-[var(--ink-mute)] hover:text-[var(--crimson)] text-lg" data-i="${i}" onclick="removeFile(${i})">×</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function removeFile(i){
+  selectedFiles.splice(i, 1);
+  renderFileList();
+  updateSubmitBtn();
+}
+
+function updateSubmitBtn(){
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = !(selectedFiles.length > 0);
+}
+
+// ===== 提交 =====
+document.getElementById('submit-btn').addEventListener('click', submitForm);
+document.getElementById('reset-btn').addEventListener('click', () => {
+  selectedFiles = [];
+  document.getElementById('person-name').value = '';
+  renderFileList();
+  updateSubmitBtn();
+});
+
+async function submitForm(){
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  document.getElementById('submit-text').innerHTML = '<span class="spinner"></span> 上传中...';
+
+  const fd = new FormData();
+  fd.append('person', document.getElementById('person-name').value);
+  for (const f of selectedFiles) fd.append('files', f);
+
+  try {
+    const r = await fetch('/api/upload', {method:'POST', body:fd}).then(r=>r.json());
+    if (r.task_id){
+      currentTaskId = r.task_id;
+      switchView('progress');
+      document.getElementById('progress-person').textContent = `${r.person} · ${r.file_count} 份材料`;
+      initAgentConsole();
+      startPolling(r.task_id);
+    } else {
+      throw new Error(r.detail || '提交失败');
+    }
+  } catch(e) {
+    alert('提交失败：' + e.message);
+    btn.disabled = false;
+    document.getElementById('submit-text').textContent = '提交预审';
+  }
+}
+
+// ===== 轮询进度 =====
+function startPolling(taskId){
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const t = await fetch(`/api/task/${taskId}`).then(r=>r.json());
+      updateProgress(t);
+      if (t.status === 'done' || t.status === 'error'){
+        clearInterval(pollTimer);
+        pollTimer = null;
+        setTimeout(() => showResult(t), 800);
+      }
+    } catch(e){ /* ignore */ }
+  }, 2000);
+}
+
+function updateProgress(t){
+  const pct = t.progress || 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-step').textContent = t.step || '';
+
+  // 产品识别结果实时展示
+  if (t.product_info && t.product_info.product_name){
+    const card = document.getElementById('progress-product-card');
+    if (card) card.style.display = 'block';
+    const pInfo = t.product_info;
+    const _pconf = pInfo.confidence || 0;
+    const pconf = _pconf <= 1 ? Math.round(_pconf * 100) : Math.round(_pconf);
+    const pnameEl = document.getElementById('progress-product-name');
+    const pkeyEl = document.getElementById('progress-product-key');
+    const pconfEl = document.getElementById('progress-product-conf');
+    const pevEl = document.getElementById('progress-product-evidence');
+    if (pnameEl) pnameEl.textContent = pInfo.product_name || '--';
+    if (pkeyEl) pkeyEl.textContent = pInfo.product_key || '--';
+    if (pconfEl){
+      pconfEl.textContent = pconf + '%';
+      pconfEl.style.color = pconf >= 80 ? 'var(--emerald)' : pconf >= 60 ? 'var(--amber)' : 'var(--crimson)';
+    }
+    if (pevEl) pevEl.textContent = pInfo.evidence || '基于材料类型组合推断';
+  }
+
+  // 时间线状态推断（展示顺序：产品识别 → OCR → 校验比对 → 缺失规则 → 推理外部 → RAG/KG → 决策报告）
+  // 注：内部实际执行顺序是 OCR → 产品识别，此处为展示逻辑调整
+  const step = (t.step || '').toLowerCase();
+  const productDone = !!(t.product_info && t.product_info.product_name);
+  setTs('ts-0', productDone ? 'done' : ((step.includes('产品') || step.includes('ocr') || pct < 25) ? 'active' : 'done'));
+  setTs('ts-1', productDone && pct >= 20 && pct < 35 ? 'active' : (pct >= 35 ? 'done' : (pct >= 10 ? 'active' : '')));
+  setTs('ts-2', pct > 35 && pct <= 45 ? 'active' : (pct > 45 ? 'done' : ''));
+  setTs('ts-3', pct > 45 && pct <= 60 ? 'active' : (pct > 60 ? 'done' : ''));
+  setTs('ts-4', pct > 60 && pct <= 78 ? 'active' : (pct > 78 ? 'done' : ''));
+  setTs('ts-5', pct > 78 && pct <= 92 ? 'active' : (pct > 92 ? 'done' : ''));
+  setTs('ts-6', pct > 92 && t.status !== 'done' ? 'active' : (t.status === 'done' ? 'done' : ''));
+
+  if (t.status === 'error'){
+    setTs('ts-1',''); setTs('ts-2',''); setTs('ts-3','');
+    setTs('ts-4','error'); setTs('ts-5',''); setTs('ts-6','');
+  }
+
+  // 推送 Agent 思考过程日志
+  pushAgentLog(t);
+}
+
+// ===== Agent 思考过程控制台 =====
+let _agentConsoleEl = null;
+let _agentClockEl = null;
+let _agentStartTime = null;
+let _lastStepLogged = null;
+let _agentClockTimer = null;
+let _productLogged = false;
+
+function initAgentConsole(){
+  _agentConsoleEl = document.getElementById('agent-console');
+  _agentClockEl = document.getElementById('agent-clock');
+  _agentStartTime = Date.now();
+  _lastStepLogged = null;
+  _productLogged = false;
+  if (_agentConsoleEl) _agentConsoleEl.innerHTML = '';
+  appendAgentLog('sys', 'SYS', 'Agent 启动 · 任务已派发至预审引擎');
+  if (_agentClockTimer) clearInterval(_agentClockTimer);
+  _agentClockTimer = setInterval(updateAgentClock, 1000);
+  updateAgentClock();
+}
+
+function updateAgentClock(){
+  if (!_agentStartTime || !_agentClockEl) return;
+  const elapsed = Math.floor((Date.now() - _agentStartTime) / 1000);
+  const h = String(Math.floor(elapsed/3600)).padStart(2,'0');
+  const m = String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
+  const s = String(elapsed%60).padStart(2,'0');
+  _agentClockEl.textContent = `${h}:${m}:${s}`;
+}
+
+function appendAgentLog(tag, tagText, msg){
+  if (!_agentConsoleEl) return;
+  const now = new Date();
+  const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const ln = document.createElement('div');
+  ln.className = 'ln';
+  ln.innerHTML = `<span class="ts">${ts}</span><span class="tag ${tag}">${tagText}</span><span class="msg">${msg}</span>`;
+  _agentConsoleEl.appendChild(ln);
+  _agentConsoleEl.scrollTop = _agentConsoleEl.scrollHeight;
+}
+
+// 基于后端进度 step 推断当前工具并打日志
+function pushAgentLog(t){
+  if (!t || !t.step) return;
+  const step = t.step || '';
+  if (step === _lastStepLogged) return;
+  _lastStepLogged = step;
+
+  // 产品识别完成时特殊日志
+  if (t.product_info && t.product_info.product_name && !_productLogged){
+    _productLogged = true;
+    const p = t.product_info;
+    const _c = p.confidence || 0;
+    const conf = _c <= 1 ? Math.round(_c * 100) : Math.round(_c);
+    appendAgentLog('tool', 'TOOL', `产品识别完成 → <span class="gold-text">${p.product_name}</span>（置信度 ${conf}%）`);
+    appendAgentLog('sys', 'SYS', `识别依据：${p.evidence || '基于材料组合推断'}`);
+  }
+
+  const s = step.toLowerCase();
+  if (s.includes('ocr') || s.includes('启动')){
+    appendAgentLog('tool', 'TOOL', `调用 tool_ocr_extract · PaddleOCR-VL + Qwen-VLM 解析 ${t.file_count||'?'} 份材料`);
+  } else if (s.includes('产品') || s.includes('策略') || s.includes('business')){
+    if (!_productLogged){
+      appendAgentLog('tool', 'TOOL', `调用 tool_business_entry · 识别贷款产品并加载策略`);
+    }
+  } else if (s.includes('规则') || s.includes('四层') || s.includes('layered')){
+    appendAgentLog('tool', 'TOOL', `调用 tool_layered_rules · 执行 L1→L2→L3→L4 四层规则引擎`);
+    appendAgentLog('sys', 'SYS', `规则层级：L1 完整性 / L2 字段逻辑 / L3 业务规则 / L4 KG 告警`);
+  } else if (s.includes('kg') || s.includes('图谱') || s.includes('欺诈')){
+    appendAgentLog('kg', 'KG', `调用 tool_kg_fraud · Neo4j 知识图谱反欺诈检测`);
+  } else if (s.includes('rag') || s.includes('检索')){
+    appendAgentLog('rag', 'RAG', `调用 tool_rag_search · BGE-M3 + BM25 Hybrid 检索法规/制度/案例`);
+  } else if (s.includes('llm') || s.includes('推理') || s.includes('解释')){
+    appendAgentLog('llm', 'LLM', `调用 tool_llm_explain · Qwen2.5-72B 语义风险推理`);
+  } else if (s.includes('评分') || s.includes('scoring')){
+    appendAgentLog('tool', 'TOOL', `调用 tool_risk_scoring · 7 维度加权评分 + 一票否决检测`);
+  } else if (s.includes('报告') || s.includes('生成')){
+    appendAgentLog('sys', 'SYS', `生成结构化审核报告 · 即将完成`);
+  } else if (s.includes('完成') || s.includes('done')){
+    appendAgentLog('sys', 'SYS', `预审完成 · 决策报告已生成 ✓`);
+  } else {
+    appendAgentLog('sys', 'SYS', step);
+  }
+}
+
+function setTs(id, state){
+  const el = document.getElementById(id);
+  el.classList.remove('active','done','error');
+  if (state) el.classList.add(state);
+}
+
+// ===== 结果展示 =====
+function showResult(t){
+  switchView('result');
+  const c = document.getElementById('result-content');
+  window._lastResult = (t.result || {});
+  if (t.status === 'error'){
+    c.innerHTML = `
+      <div class="panel panel-corner p-10 max-w-[860px] mx-auto text-center">
+        <div class="text-[var(--crimson)] text-5xl mb-4">⚠</div>
+        <h1 class="font-display text-3xl font-semibold mb-3">预审失败</h1>
+        <div class="text-[var(--ink-dim)] text-sm mb-6">${t.error || '未知错误'}</div>
+        <button class="btn-gold" onclick="resetToForm()">重新提交</button>
+      </div>
+    `;
+    return;
+  }
+  const r = t.result || {};
+
+  // 决策映射
+  const decisionText = mapDecisionText(r.decision || r.action);
+  const decisionColor = mapDecisionColor(r.decision || r.action);
+  const decisionBadge = mapDecisionBadge(r.decision || r.action);
+  const decisionIcon = mapDecisionIcon(r.decision || r.action);
+
+  // 风险分（0-100）
+  const riskScore = (r.risk_score != null) ? Math.round(r.risk_score)
+                  : (r.confidence && r.confidence.total_confidence != null) ? Math.round((1 - r.confidence.total_confidence) * 100)
+                  : null;
+  const riskLevel = r.risk_level || '--';
+  const riskLevelColor = riskLevel==='high'?'var(--crimson)':riskLevel==='medium'?'var(--amber)':riskLevel==='low'?'var(--emerald)':'var(--ink-mute)';
+
+  // 数据源（带容错）
+  const ocrResults = r.ocr_results || r.extracted_docs || null;
+  const ruleResults = r.rule_results || r.findings || null;
+  const kgAlerts = r.kg_alerts || [];
+  const ragRefs = r.rag_references || r.rag_result || null;
+  const scoreBreakdown = r.score_breakdown || r.dimension_scores || null;
+  const layerSummary = r.layer_summary || {};
+  const severitySummary = r.severity_summary || {};
+  const actionLabel = r.action_label || '';
+  const actionExplanation = r.action_explanation || r.reject_reason || '';
+  const strategyApplied = r.strategy_applied || (r.product && r.product.product_name) || '--';
+  const productInfo = r.product || { product_name: strategyApplied, product_key: '--', confidence: 0, evidence: '' };
+  const _pconf = productInfo.confidence || 0;
+  const productConf = _pconf <= 1 ? Math.round(_pconf * 100) : Math.round(_pconf);
+  const ruleBlockOverride = r.rule_block_override === true;
+
+  // 7步闭环状态推断
+  const pipeline = buildPipeline(r);
+
+  c.innerHTML = `
+    <div class="text-center mb-8 stagger">
+      <div class="text-[11px] tracking-[.35em] uppercase mb-3" style="color:${decisionColor}">Pre-Audit Complete</div>
+      <h1 class="font-display text-[44px] font-semibold leading-tight mb-3">
+        预审<span class="gold-grad italic">结果</span>
+      </h1>
+    </div>
+
+    <!-- 顶部决策卡 -->
+    <div class="panel panel-corner panel-glow p-8 mb-6 max-w-[1080px] mx-auto stagger">
+      <!-- 产品识别结果（醒目展示） -->
+      <div class="mb-6 pb-6" style="border-bottom:1px solid rgba(200,153,104,.15)">
+        <div class="flex items-center gap-2 mb-3">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v14M1 8h14" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span class="text-[11px] tracking-[.25em] uppercase text-[var(--gold-dim)]">Agent 自动识别产品</span>
+          <span class="text-[10px] text-[var(--ink-mute)] ml-auto font-mono">基于材料组合智能判断</span>
+        </div>
+        <div class="flex items-end gap-6">
+          <div>
+            <div class="font-display text-4xl font-semibold gold-grad" id="product-name">${productInfo.product_name || strategyApplied}</div>
+            <div class="text-[var(--ink-mute)] text-xs mt-1 font-mono">${productInfo.product_key || '--'}</div>
+          </div>
+          <div class="text-center">
+            <div class="font-display text-2xl font-bold" id="product-conf" style="color:var(--green)">${productConf}%</div>
+            <div class="text-[10px] text-[var(--ink-mute)] tracking-wider">识别置信度</div>
+          </div>
+          <div class="flex-1">
+            <div class="text-[10px] text-[var(--ink-mute)] tracking-wider mb-1">识别依据</div>
+            <div class="text-sm text-[var(--ink-dim)] leading-relaxed">${productInfo.evidence || '基于材料类型组合推断'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-[1fr_auto] gap-8 items-center">
+        <div>
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-[11px] tracking-[.2em] uppercase text-[var(--gold-dim)]">申请人</span>
+            <span class="text-[10px] text-[var(--ink-mute)] font-mono">任务号 ${currentTaskId || '--'}</span>
+          </div>
+          <h2 class="font-display text-3xl font-semibold mb-1">${r.person || t.person || '--'}</h2>
+          <div class="text-[var(--ink-mute)] text-xs font-mono mb-4">${r.doc_count || t.file_count || 0} 份材料 · ${r.elapsed_seconds ? r.elapsed_seconds.toFixed(1)+' 秒' : '--'}</div>
+
+          <div class="flex items-baseline gap-4 mb-3">
+            <div class="text-[10px] tracking-[.2em] uppercase text-[var(--gold-dim)]">决策建议</div>
+          </div>
+          <div class="decision-mega" style="color:${decisionColor}">
+            ${decisionIcon} ${decisionText}
+          </div>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="badge ${decisionBadge} text-sm px-4 py-1.5">${r.decision || r.action || '--'}</span>
+            <span class="badge badge-gold">风险等级 · <span style="color:${riskLevelColor};font-weight:700">${riskLevel}</span></span>
+            ${actionLabel ? `<span class="badge badge-warn">${actionLabel}</span>` : ''}
+            ${ruleBlockOverride ? `<span class="badge badge-reject">⚠ 一票否决触发</span>` : ''}
+          </div>
+          ${actionExplanation ? `
+            <div class="mt-4 p-4 border-l-2 text-sm leading-relaxed" style="border-color:${decisionColor};background:rgba(200,153,104,.04);color:var(--ink-dim)">
+              <div class="text-[10px] tracking-[.2em] uppercase mb-2" style="color:${decisionColor}">综合解释</div>
+              ${actionExplanation}
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- 风险分环形 -->
+        <div class="flex flex-col items-center">
+          <svg width="160" height="160" class="score-ring">
+            <circle cx="80" cy="80" r="68" fill="none" stroke="var(--border)" stroke-width="8"/>
+            <circle cx="80" cy="80" r="68" fill="none" stroke="${riskScore!=null?riskLevelColor:'var(--ink-mute)'}" stroke-width="8"
+                    stroke-linecap="round" stroke-dasharray="${2*Math.PI*68}"
+                    stroke-dashoffset="${2*Math.PI*68}" id="risk-ring"/>
+          </svg>
+          <div style="margin-top:-110px;text-align:center;pointer-events:none">
+            <div class="text-[10px] tracking-[.2em] uppercase text-[var(--gold-dim)]">风险分</div>
+            <div class="font-display text-5xl font-semibold" style="color:${riskLevelColor}" id="risk-num">${riskScore!=null?'0':'--'}</div>
+            <div class="text-[10px] text-[var(--ink-mute)] mt-1">/ 100</div>
+          </div>
+          <div style="margin-top:50px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agent 7步闭环可视化 -->
+    <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+      <div class="section-title">
+        <h3>Agent 7 步闭环</h3>
+        <span class="meta">Pre-Audit Pipeline</span>
+      </div>
+      <div class="pipeline">
+        ${pipeline.map((p, i) => `
+          <div class="pipeline-node ${p.state}">
+            <div class="dot">${p.state==='done'?'✓':p.state==='error'?'!':(i+1)}</div>
+            <div class="label">${p.name}</div>
+            <div class="sub">${p.detail}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 概览统计：层级 + 严重度 + 置信度 -->
+    <div class="grid grid-cols-3 gap-4 mb-6 max-w-[1080px] mx-auto stagger">
+      <div class="panel panel-corner p-5">
+        <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-3">规则层级命中</div>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          ${['L1','L2','L3','L4'].map(L => `
+            <div>
+              <div class="font-display text-2xl font-semibold gold-text">${layerSummary[L]!=null?layerSummary[L]:'--'}</div>
+              <div class="text-[10px] text-[var(--ink-mute)] mt-1">${L}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="panel panel-corner p-5">
+        <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-3">严重度分布</div>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div><div class="font-display text-2xl font-semibold" style="color:var(--crimson)">${severitySummary.block||0}</div><div class="text-[10px] text-[var(--ink-mute)] mt-1">Block</div></div>
+          <div><div class="font-display text-2xl font-semibold" style="color:var(--amber)">${severitySummary.major||0}</div><div class="text-[10px] text-[var(--ink-mute)] mt-1">Major</div></div>
+          <div><div class="font-display text-2xl font-semibold" style="color:var(--gold-bright)">${severitySummary.minor||0}</div><div class="text-[10px] text-[var(--ink-mute)] mt-1">Minor</div></div>
+          <div><div class="font-display text-2xl font-semibold" style="color:var(--ink-mute)">${severitySummary.info||0}</div><div class="text-[10px] text-[var(--ink-mute)] mt-1">Info</div></div>
+        </div>
+      </div>
+      <div class="panel panel-corner p-5">
+        <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-3">综合置信度</div>
+        <div class="flex items-center gap-3">
+          <div class="font-display text-3xl font-semibold gold-grad" id="conf-num">${(r.confidence && r.confidence.total_confidence!=null)?'0':'--'}</div>
+          <div class="text-[10px] text-[var(--ink-mute)] leading-tight">综合置信度<br>(0-100)</div>
+        </div>
+        <div class="text-[11px] text-[var(--ink-mute)] mt-2 font-mono">${r.risk_points_count!=null?r.risk_points_count:'--'} 个风险点 · ${r.doc_count||t.file_count||0} 份材料</div>
+      </div>
+    </div>
+
+    <!-- 风险评分分解（7 维度条形图） -->
+    ${scoreBreakdown ? `
+      <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="section-title">
+          <h3>风险评分分解</h3>
+          <span class="meta">Score Breakdown · 7 Dimensions</span>
+        </div>
+        <div class="space-y-3">
+          ${Object.entries(scoreBreakdown).map(([k, v]) => {
+            const score = typeof v === 'number' ? v : (v && v.score!=null ? v.score : null);
+            const detail = (v && v.detail) ? v.detail : '';
+            const pct = score!=null ? Math.max(0, Math.min(100, score)) : 0;
+            const cls = pct<40?'bad':pct<70?'warn':'';
+            const label = DIM_LABELS[k] || k;
+            return `
+              <div>
+                <div class="flex justify-between items-baseline mb-1">
+                  <span class="text-xs text-[var(--ink-dim)]">${label} <span class="font-mono text-[10px] text-[var(--ink-mute)]">${k}</span></span>
+                  <span class="font-display font-semibold text-sm" style="color:${pct<40?'var(--crimson)':pct<70?'var(--amber)':'var(--emerald)'}">${score!=null?score:'--'}<span class="text-[10px] text-[var(--ink-mute)]"> / 100</span></span>
+                </div>
+                <div class="dim-bar"><div class="fill ${cls}" data-w="${pct}" style="width:0%"></div></div>
+                ${detail ? `<div class="text-[10px] text-[var(--ink-mute)] mt-1 font-mono">${detail}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- 风险点明细 -->
+    ${(r.risk_points && r.risk_points.length) ? `
+      <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="section-title">
+          <h3>风险点明细</h3>
+          <span class="meta">${r.risk_points.length} Risk Points · LLM 推理</span>
+        </div>
+        <div class="space-y-4">
+          ${r.risk_points.map((rp,i) => {
+            const color = rp.level==='high'?'var(--crimson)':rp.level==='medium'?'var(--amber)':'var(--emerald)';
+            const badge = rp.level==='high'?'badge-high':rp.level==='medium'?'badge-medium':'badge-pass';
+            return `
+              <div class="relative pl-8 pb-4 border-l border-[var(--border-soft)] ml-3">
+                <div class="absolute -left-[7px] top-1 w-3 h-3 rounded-full" style="background:${color};box-shadow:0 0 8px ${color}"></div>
+                <div class="flex items-center gap-3 mb-2">
+                  <span class="badge ${badge}">${rp.level}</span>
+                  <span class="font-display font-semibold text-base" style="color:${color}">${rp.type}</span>
+                </div>
+                <div class="text-sm text-[var(--ink-dim)] leading-relaxed">${rp.detail || rp.reason || '--'}</div>
+                ${rp.policy_basis ? `<div class="mt-2 text-[11px] text-[var(--gold-dim)] font-mono">📜 ${rp.policy_basis}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- OCR 抽取结果 -->
+    ${ocrResults && ocrResults.length ? `
+      <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="section-title">
+          <h3>OCR 抽取结果</h3>
+          <span class="meta">${ocrResults.length} 份材料 · PaddleOCR-VL + Qwen-VLM</span>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          ${ocrResults.slice(0, 8).map(d => {
+            const docType = d.doc_type || d.type || 'unknown';
+            const conf = d.confidence;
+            const fields = d.fields || {};
+            const fieldKeys = Object.keys(fields).slice(0, 6);
+            return `
+              <div class="ocr-card">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="font-display font-semibold text-sm gold-text">${DOC_LABELS[docType] || docType}</span>
+                  ${conf!=null?`<span class="badge ${conf>0.85?'badge-pass':conf>0.6?'badge-warn':'badge-reject'}">${(conf*100).toFixed(0)}%</span>`:''}
+                </div>
+                <div class="text-[10px] text-[var(--ink-mute)] font-mono mb-2">${docType}</div>
+                ${fieldKeys.length ? `
+                  <div class="ocr-fields">
+                    ${fieldKeys.map(k => `
+                      <div class="f"><span class="k">${k}</span><span class="v" title="${String(fields[k]).replace(/"/g,'&quot;')}">${String(fields[k]??'').slice(0,40) || '--'}</span></div>
+                    `).join('')}
+                  </div>
+                ` : `<div class="text-[11px] text-[var(--ink-mute)]">无结构化字段</div>`}
+              </div>
+            `;
+          }).join('')}
+          ${ocrResults.length > 8 ? `<div class="ocr-card flex items-center justify-center text-[var(--ink-mute)] text-xs">+ ${ocrResults.length - 8} 份更多材料</div>` : ''}
+        </div>
+      </div>
+    ` : `
+      <div class="panel panel-corner p-5 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-[var(--ink-mute)]">OCR 抽取结果</div>
+          <div class="text-xs text-[var(--ink-mute)]">--</div>
+        </div>
+        <div class="text-[11px] text-[var(--ink-mute)] mt-1">材料类型：${(r.doc_types||[]).join('、') || '未提供'}</div>
+      </div>
+    `}
+
+    <!-- 规则命中详情 -->
+    ${ruleResults && ruleResults.length ? `
+      <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="section-title">
+          <h3>规则命中详情</h3>
+          <span class="meta">L1-L4 四层规则引擎 · ${ruleResults.length} 条</span>
+        </div>
+        <div class="border border-[var(--border-soft)]">
+          <div class="rule-row" style="background:rgba(200,153,104,.04);font-weight:600;color:var(--gold-dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase">
+            <div>层级</div><div>规则 ID</div><div>规则 / 证据</div><div>严重度</div>
+          </div>
+          ${ruleResults.slice(0, 12).map(f => {
+            const sev = f.severity || 'info';
+            const sevColor = sev==='block'?'var(--crimson)':sev==='major'?'var(--amber)':sev==='minor'?'var(--gold-bright)':'var(--ink-mute)';
+            const sevBadge = sev==='block'?'badge-reject':sev==='major'?'badge-medium':sev==='minor'?'badge-gold':'badge-warn';
+            return `
+              <div class="rule-row">
+                <div class="font-mono gold-text">${f.layer || '--'}</div>
+                <div class="font-mono text-[11px]">${f.rule_id || '--'}</div>
+                <div>
+                  <div class="text-[var(--ink)] font-medium">${f.rule_name || '--'}</div>
+                  <div class="text-[11px] text-[var(--ink-mute)] mt-0.5">${f.evidence || ''}</div>
+                </div>
+                <div><span class="badge ${sevBadge}" style="color:${sevColor};border-color:${sevColor}">${sev}</span></div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+        ${ruleResults.length > 12 ? `<div class="text-[11px] text-[var(--ink-mute)] mt-3 text-center">显示前 12 条 · 共 ${ruleResults.length} 条规则命中</div>` : ''}
+      </div>
+    ` : ''}
+
+    <!-- KG 反欺诈结果 -->
+    ${kgAlerts && kgAlerts.length ? `
+      <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="section-title">
+          <h3>KG 反欺诈告警</h3>
+          <span class="meta">${kgAlerts.length} 条告警 · Neo4j 图谱</span>
+        </div>
+        <div class="space-y-3">
+          ${kgAlerts.map(a => `
+            <div class="kg-alert">
+              <div class="flex items-center gap-3 mb-1">
+                <span class="font-display font-semibold" style="color:var(--crimson)">${a.alert_type || a.type || '欺诈告警'}</span>
+                ${a.severity ? `<span class="badge badge-reject">${a.severity}</span>` : ''}
+              </div>
+              <div class="text-sm text-[var(--ink-dim)] leading-relaxed">${a.detail || a.reason || a.description || '--'}</div>
+              ${a.entities ? `<div class="text-[10px] text-[var(--ink-mute)] font-mono mt-2">涉及实体：${(a.entities||[]).join(' · ')}</div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    ` : `
+      <div class="panel panel-corner p-5 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="flex items-center gap-3">
+          <span class="text-[var(--emerald)] text-lg">✓</span>
+          <div>
+            <div class="text-sm">KG 反欺诈检测</div>
+            <div class="text-[11px] text-[var(--ink-mute)]">知识图谱未发现欺诈团伙告警</div>
+          </div>
+        </div>
+      </div>
+    `}
+
+    <!-- RAG 法规依据 -->
+    ${ragRefs && (ragRefs.regulation_references?.length || ragRefs.policy_references?.length || ragRefs.case_references?.length || ragRefs.structured_matches?.length) ? `
+      <div class="panel panel-corner p-7 mb-6 max-w-[1080px] mx-auto stagger">
+        <div class="section-title">
+          <h3>RAG 法规依据</h3>
+          <span class="meta">BGE-M3 + BM25 Hybrid 检索</span>
+        </div>
+
+        ${ragRefs.risk_queries && ragRefs.risk_queries.length ? `
+          <div class="mb-4">
+            <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-2">风险驱动检索</div>
+            <div class="flex flex-wrap gap-2">
+              ${ragRefs.risk_queries.map(q => `<span class="badge badge-gold">${q.trigger || q.query}</span>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${ragRefs.structured_matches && ragRefs.structured_matches.length ? `
+          <div class="mb-4">
+            <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-2">结构化规则匹配</div>
+            <div class="space-y-2">
+              ${ragRefs.structured_matches.map(m => `
+                <div class="ref-card">
+                  <div class="flex justify-between items-baseline gap-3 mb-1">
+                    <span class="text-sm font-medium gold-text">${m.matched_article || m.article || '--'}</span>
+                    <span class="badge ${m.level==='reject'||m.level==='block'?'badge-reject':m.level==='warn'?'badge-warn':'badge-gold'}">${m.level||'info'}</span>
+                  </div>
+                  <div class="text-[11px] text-[var(--ink-mute)] font-mono mb-1">${m.matched_source || m.source || ''}</div>
+                  <div class="text-xs text-[var(--ink-dim)] leading-relaxed">${m.description || ''}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="grid grid-cols-3 gap-3">
+          ${[
+            ['法规', ragRefs.regulation_references],
+            ['制度', ragRefs.policy_references],
+            ['案例', ragRefs.case_references]
+          ].map(([title, refs]) => refs && refs.length ? `
+            <div>
+              <div class="text-[10px] tracking-[.15em] uppercase text-[var(--gold-dim)] mb-2">${title} (${refs.length})</div>
+              <div class="space-y-2">
+                ${refs.slice(0,3).map(ref => `
+                  <div class="ref-card">
+                    <div class="text-xs font-medium gold-text">${ref.title || ref.article || '--'}</div>
+                    ${ref.source ? `<div class="text-[10px] text-[var(--ink-mute)] font-mono mt-1">${ref.source}</div>` : ''}
+                    ${ref.snippet || ref.text ? `<div class="text-[11px] text-[var(--ink-dim)] mt-1 line-clamp-3 leading-relaxed">${(ref.snippet || ref.text).slice(0,150)}...</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : '').join('')}
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- 字段差异 + 缺失材料 -->
+    <div class="grid grid-cols-2 gap-5 max-w-[1080px] mx-auto mb-6 stagger">
+      <div class="panel panel-corner p-6">
+        <h3 class="font-display text-lg font-semibold mb-1">字段差异</h3>
+        <div class="text-[10px] text-[var(--ink-mute)] mb-3">${(r.field_discrepancies||[]).length} 条 · 跨文档比对</div>
+        ${(r.field_discrepancies||[]).length ? (r.field_discrepancies||[]).map(d => `
+          <div class="border border-[var(--border-soft)] p-3 mb-2" style="background:rgba(224,122,95,.03)">
+            <div class="flex justify-between text-xs mb-2">
+              <span class="font-mono gold-text">${d.field}</span>
+              <span class="badge badge-reject">${d.judgment}</span>
+            </div>
+            <div class="space-y-1">
+              ${(d.values||[]).map(v => `<div class="flex justify-between text-[11px]"><span class="text-[var(--ink-mute)]">${v.doc}</span><span class="font-mono">${v.value || '--'}</span></div>`).join('')}
+            </div>
+          </div>
+        `).join('') : '<div class="text-[var(--emerald)] text-sm">✓ 无差异</div>'}
+      </div>
+      <div class="panel panel-corner p-6">
+        <h3 class="font-display text-lg font-semibold mb-1">缺失材料</h3>
+        <div class="text-[10px] text-[var(--ink-mute)] mb-3">必填 / 选填检测</div>
+        ${(r.missing_required||[]).length ? `
+          <div class="text-[10px] tracking-[.15em] uppercase text-[var(--crimson)] mb-2">必填缺失</div>
+          ${(r.missing_required||[]).map(m => `<div class="text-sm py-1.5 border-b border-[var(--border-soft)]">❌ ${m}</div>`).join('')}
+        ` : '<div class="text-[var(--emerald)] text-sm">✓ 必填齐全</div>'}
+        ${(r.missing_optional||[]).length ? `
+          <div class="text-[10px] tracking-[.15em] uppercase text-[var(--amber)] mb-2 mt-3">选填缺失</div>
+          ${(r.missing_optional||[]).map(m => `<div class="text-sm py-1.5 text-[var(--ink-dim)]">⚠ ${m}</div>`).join('')}
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- 人工审核确认 -->
+    <div class="panel panel-corner panel-glow p-7 mb-6 max-w-[1080px] mx-auto stagger">
+      <div class="section-title">
+        <h3>人工审核确认</h3>
+        <span class="meta">Reviewer Decision</span>
+      </div>
+      <div class="text-xs text-[var(--ink-dim)] mb-4">请审核员基于以上 Agent 预审结果做出最终决策。审核反馈将回流至规则权重持续学习。</div>
+      <div class="review-actions">
+        <button class="btn-review approve" onclick="submitReview('approve')">
+          <span class="ico">✓</span>
+          <span class="ttl">通过</span>
+          <span class="desc">APPROVE</span>
+        </button>
+        <button class="btn-review reject" onclick="submitReview('reject')">
+          <span class="ico">✕</span>
+          <span class="ttl">驳回</span>
+          <span class="desc">REJECT</span>
+        </button>
+        <button class="btn-review supplement" onclick="submitReview('supplement')">
+          <span class="ico">↻</span>
+          <span class="ttl">补充材料</span>
+          <span class="desc">SUPPLEMENT</span>
+        </button>
+      </div>
+      <div id="review-status" class="mt-4 text-xs text-[var(--ink-mute)]" style="display:none"></div>
+    </div>
+
+    <div class="text-center mt-10 mb-6">
+      <button class="btn-gold" onclick="resetToForm()">提交新的预审</button>
+      <a href="/" class="btn-ghost ml-3 inline-block">查看控制台</a>
+    </div>
+  `;
+
+  // 触发动画
+  requestAnimationFrame(() => {
+    // 风险分环形动画
+    const ring = document.getElementById('risk-ring');
+    if (ring && riskScore != null){
+      const circumference = 2 * Math.PI * 68;
+      const offset = circumference * (1 - Math.max(0, Math.min(100, riskScore)) / 100);
+      ring.style.strokeDashoffset = offset;
+    }
+    // 数字滚动
+    if (riskScore != null) animateNum('risk-num', 0, riskScore, 1200);
+    const confEl = document.getElementById('conf-num');
+    if (confEl && r.confidence && r.confidence.total_confidence != null){
+      const confPct = r.confidence.total_confidence > 1 ? r.confidence.total_confidence : Math.round(r.confidence.total_confidence * 1000) / 10;
+      animateNum('conf-num', 0, confPct, 1200, 1);
+    }
+    // 维度条形图填充
+    document.querySelectorAll('.dim-bar .fill').forEach(el => {
+      const w = el.getAttribute('data-w');
+      setTimeout(() => { el.style.width = w + '%'; }, 50);
+    });
+  });
+
+  loadHistory();
+}
+
+// 维度标签映射
+const DIM_LABELS = {
+  completeness: '材料完整度',
+  field_logic: '字段逻辑',
+  business_rule: '业务规则',
+  fraud: '反欺诈',
+  ocr_confidence: 'OCR 置信度',
+  rag_evidence: 'RAG 证据',
+  llm_semantic: 'LLM 语义'
+};
+
+// 文档类型标签
+const DOC_LABELS = {
+  id_card_front: '身份证（正面）',
+  id_card_back: '身份证（反面）',
+  household_register_front: '户口本（首页）',
+  income_certificate: '收入证明',
+  bank_statement: '银行流水',
+  bank_card: '银行卡',
+  business_license: '营业执照',
+  tax_certificate: '纳税证明',
+  credit_report: '征信报告',
+  real_estate_query: '房产查询',
+  real_estate_cert: '不动产权证',
+  marriage_cert: '婚姻证明',
+  loan_settlement: '贷款结清证明',
+  fund_flow_analysis: '资金流水分析',
+  food_license: '食品经营许可证',
+  loan_application: '贷款申请表',
+  loan_investigation: '贷前调查表',
+  financial_statement: '财务报表',
+  unknown: '未识别材料'
+};
+
+// 决策文本/颜色映射
+function mapDecisionText(d){
+  const s = (d || '').toLowerCase();
+  if (s.includes('reject') || s.includes('拒')) return '建议拒贷';
+  if (s.includes('manual') || s.includes('复核') || s.includes('review')) return '建议复核';
+  if (s.includes('investigate') || s.includes('核查')) return '建议核查';
+  if (s.includes('approve') || s.includes('pass') || s.includes('通过')) return '建议通过';
+  return d || '--';
+}
+function mapDecisionColor(d){
+  const s = (d || '').toLowerCase();
+  if (s.includes('reject') || s.includes('拒')) return 'var(--crimson)';
+  if (s.includes('manual') || s.includes('复核') || s.includes('review')) return 'var(--amber)';
+  if (s.includes('investigate') || s.includes('核查')) return 'var(--crimson-deep)';
+  if (s.includes('approve') || s.includes('pass') || s.includes('通过')) return 'var(--emerald)';
+  return 'var(--gold-bright)';
+}
+function mapDecisionBadge(d){
+  const s = (d || '').toLowerCase();
+  if (s.includes('reject') || s.includes('拒')) return 'badge-reject';
+  if (s.includes('manual') || s.includes('复核') || s.includes('review')) return 'badge-warn';
+  if (s.includes('investigate') || s.includes('核查')) return 'badge-reject';
+  if (s.includes('approve') || s.includes('pass') || s.includes('通过')) return 'badge-pass';
+  return 'badge-gold';
+}
+function mapDecisionIcon(d){
+  const s = (d || '').toLowerCase();
+  if (s.includes('reject') || s.includes('拒')) return '⛔';
+  if (s.includes('manual') || s.includes('复核') || s.includes('review')) return '⚠';
+  if (s.includes('investigate') || s.includes('核查')) return '🔍';
+  if (s.includes('approve') || s.includes('pass') || s.includes('通过')) return '✓';
+  return '◆';
+}
+
+// 7步闭环状态推断
+function buildPipeline(r){
+  const has = (cond) => cond ? 'done' : 'pending';
+  const findings = r.findings || r.rule_results || [];
+  const kgAlerts = r.kg_alerts || [];
+  const rag = r.rag_result || r.rag_references;
+  const dim = r.dimension_scores || r.score_breakdown || {};
+  const riskPoints = r.risk_points || [];
+  return [
+    {name:'OCR 抽取', state: has(r.doc_count>0), detail: (r.doc_count||0)+' 份材料'},
+    {name:'产品识别', state: has(r.product || r.strategy_applied), detail: r.strategy_applied || (r.product&&r.product.product_name) || '--'},
+    {name:'四层规则', state: has(findings.length>0 || r.layer_summary), detail: findings.length+' 条命中'},
+    {name:'KG 反欺诈', state: has(kgAlerts.length>0 || r.kg_alerts!==undefined), detail: kgAlerts.length+' 条告警'},
+    {name:'RAG 检索', state: has(rag!=null), detail: rag ? (rag.regulation_references||[]).length+(rag.policy_references||[]).length+' 条引用' : '未执行'},
+    {name:'LLM 推理', state: has(riskPoints.length>0), detail: riskPoints.length+' 风险点'},
+    {name:'综合评分', state: has(r.risk_score!=null || r.decision), detail: r.risk_score!=null?r.risk_score+' 分':'--'}
+  ];
+}
+
+// 数字滚动动画
+function animateNum(id, from, to, duration, decimals){
+  decimals = decimals || 0;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const start = performance.now();
+  function step(now){
+    const t = Math.min(1, (now - start) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const val = from + (to - from) * eased;
+    el.textContent = decimals>0 ? val.toFixed(decimals) : Math.round(val);
+    if (t < 1) requestAnimationFrame(step);
+    else el.textContent = decimals>0 ? to.toFixed(decimals) : to;
+  }
+  requestAnimationFrame(step);
+}
+
+// 提交人工审核
+async function submitReview(decision){
+  const status = document.getElementById('review-status');
+  const labels = {approve:'通过', reject:'驳回', supplement:'补充材料'};
+  status.style.display = 'block';
+  status.innerHTML = '<span class="spinner"></span> 正在提交审核意见...';
+  try {
+    const r = await fetch('/api/review/' + currentTaskId, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        decision: decision,
+        decision_label: labels[decision],
+        agent_decision: (window._lastResult||{}).decision,
+        reviewer_note: '',
+        timestamp: new Date().toISOString()
+      })
+    });
+    if (r.ok){
+      status.innerHTML = '<span class="text-[var(--emerald)]">✓ 审核意见已提交（' + labels[decision] + '）</span> · 反馈将用于规则权重持续学习';
+      showToast('审核意见已提交：' + labels[decision]);
+    } else {
+      status.innerHTML = '<span class="text-[var(--amber)]">⚠ 审核接口未就绪（' + r.status + '）</span> · 已记录本地决策：' + labels[decision];
+      showToast('审核意见已记录：' + labels[decision]);
+    }
+  } catch(e){
+    status.innerHTML = '<span class="text-[var(--amber)]">⚠ ' + e.message + '</span> · 已记录本地决策：' + labels[decision];
+    showToast('审核意见已记录：' + labels[decision]);
+  }
+}
+
+// Toast 提示
+function showToast(msg){
+  let t = document.getElementById('app-toast');
+  if (!t){
+    t = document.createElement('div');
+    t.id = 'app-toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ===== 视图切换 =====
+function switchView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function resetToForm(){
+  currentTaskId = null;
+  selectedFiles = [];
+  document.getElementById('person-name').value = '';
+  renderFileList();
+  updateSubmitBtn();
+  document.querySelectorAll('.timeline-step').forEach(s => s.classList.remove('active','done','error'));
+  document.getElementById('submit-text').textContent = '提交预审';
+  switchView('form');
+  document.querySelectorAll('.step-pill').forEach(p => p.classList.remove('active','done'));
+  document.getElementById('pill-1').classList.add('active');
+}
+
+// ===== 历史 =====
+async function loadHistory(){
+  try {
+    const r = await fetch('/api/history').then(r=>r.json());
+    const list = document.getElementById('history-list');
+    if (!r.items.length){
+      list.innerHTML = '<div class="col-span-3 text-center text-[var(--ink-mute)] text-sm py-8">暂无历史记录</div>';
+      return;
+    }
+    list.innerHTML = r.items.slice(0, 6).map(it => {
+      const isReject = (it.decision || '').includes('拒');
+      const statusBadge = it.status==='done' ? (isReject?'badge-reject':'badge-pass') :
+                          it.status==='error' ? 'badge-warn' : 'badge-gold';
+      const statusText = it.status==='done' ? (it.decision||'完成') :
+                         it.status==='error' ? '失败' :
+                         it.status==='running' ? '进行中' : it.status;
+      return `
+        <div class="panel panel-corner p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="font-display font-semibold">${it.person || '--'}</div>
+            <span class="badge ${statusBadge}">${statusText}</span>
+          </div>
+          <div class="text-xs text-[var(--ink-mute)] space-y-1">
+            <div>📄 ${it.file_count || 0} 份材料</div>
+            <div class="font-mono text-[10px]">${it.created_at || '--'}</div>
+          </div>
+          ${it.summary ? `<div class="text-[11px] text-[var(--ink-dim)] mt-2 line-clamp-2 leading-relaxed" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${it.summary}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch(e){
+    console.error(e);
+  }
+}
+
+// ===== 演示模式 =====
+async function activateDemoMode(){
+  // 填充申请人姓名
+  document.getElementById('person-name').value = '张三';
+  showToast('演示模式已启用：已填充申请人"张三"，请上传材料');
+  // 提示用户选择样例材料
+  const hint = document.getElementById('demo-hint');
+  if (hint) hint.style.display = 'block';
+  else {
+    const list = document.getElementById('file-list');
+    if (list){
+      const hintDiv = document.createElement('div');
+      hintDiv.id = 'demo-hint';
+      hintDiv.className = 'mt-3 p-4 border-l-2';
+      hintDiv.style.cssText = 'border-color:var(--gold);background:rgba(200,153,104,.06)';
+      hintDiv.innerHTML = `
+        <div class="text-[11px] tracking-[.15em] uppercase text-[var(--gold-bright)] mb-2">演示模式提示</div>
+        <div class="text-xs text-[var(--ink-dim)] leading-relaxed">
+          已为您填充姓名。请从 <span class="font-mono gold-text">样例目录</span> 选择若干材料文件（如身份证、收入证明、银行流水等）后点击"提交预审"。<br>
+          Agent 将自动识别贷款产品类型。推荐：3-8 份材料可获得最佳演示效果。
+        </div>
+      `;
+      list.parentNode.insertBefore(hintDiv, list);
+    }
+  }
+  updateSubmitBtn();
+  document.getElementById('drop-zone').scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+// ===== 启动 =====
+document.getElementById('demo-btn').addEventListener('click', activateDemoMode);
+loadHistory();
+</script>
+</body>
+</html>
